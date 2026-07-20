@@ -1,206 +1,247 @@
 # mvpMedico — Documento base
 
-Documento vivo de alineación del equipo. Cualquier persona del repo puede proponer cambios vía PR. Preferimos editar este archivo antes de discutir decisiones en chats dispersos.
+Documento de alineación del equipo. Si algo de producto cambia, se edita acá (mejor en un PR que en un chat suelto).
 
 **Última actualización:** 2026-07-20  
-**Estado:** borrador de arranque (definimos juntos lo abierto)
+**Estado:** decisiones de arranque cerradas
+
+Nombres que usamos: **Waira** vende; **mvpMedico** es el repo y el producto técnico; **Mallanet** es el hub (directorio y donaciones).
 
 ---
 
-## 1. Visión y problema
+## 1. Problema
 
-### Problema
+Los médicos llevan varias agendas a la vez: consultorio, hospital, WhatsApp, Google Calendar, software de turnos, Excel. De ahí salen dobles reservas, huecos que no son reales, roce entre recepción y paciente, y tiempo tirado reconciliando calendarios.
 
-Los médicos operan con **varias agendas a la vez** (consultorio, hospital, WhatsApp, Google Calendar, software de turnos, Excel, etc.). Eso genera:
+Online tampoco alcanza con “estar en internet”: el paciente busca especialidad y un modo de pedir turno que no sea un hilo de WhatsApp.
 
-- dobles reservas / solapamientos
-- huecos fantasma o disponibilidad inconsistente
-- fricción entre recepción, médico y paciente
-- tiempo perdido reconciliando calendarios
+## 2. Qué hacemos
 
-### Solución
+Waira cobra una membresía. El médico recibe:
 
-**mvpMedico** es un lugar **centralizado de agenda** que:
+1. Ficha en el directorio de Mallanet
+2. Landing propia (entre el directorio y la reserva)
+3. Formulario/asistente de contacto que escribe en la agenda
+4. Agenda central con anti-solape e integración con Google Calendar (leer ocupado y bloquear)
 
-1. actúa como **fuente de verdad** de disponibilidad y turnos
-2. **detecta y evita solapamientos**
-3. **se integra** con las herramientas que el médico ya usa
-
-No buscamos reemplazar todo el stack clínico de golpe: primero la agenda, luego más profundidad.
-
----
-
-## 2. Usuarios y roles (borrador)
-
-| Rol | Qué hace en el MVP |
-| --- | --- |
-| **Médico** | Ve su agenda unificada, bloquea horarios, confirma/cancela turnos, conecta calendarios externos |
-| **Secretaría / recepción** | Crea y mueve turnos, consulta disponibilidad real, evita conflictos |
-| **Admin de clínica** | Invita usuarios, configura consultorios/recursos, gestiona integraciones |
-
-Roles exactos, permisos y multi-clínica: ver [Decisiones abiertas](#8-decisiones-abiertas).
-
----
-
-## 3. Alcance MVP v1
-
-Incluye:
-
-- [ ] Autenticación básica (Supabase Auth)
-- [ ] Calendario central por médico / recurso
-- [ ] CRUD de turnos (crear, editar, cancelar, reprogramar)
-- [ ] Reglas anti-solapamiento (no permitir dos turnos activos en el mismo intervalo para el mismo médico)
-- [ ] Vista de conflictos cuando una integración externa introduce solape
-- [ ] Una integración inicial: **Google Calendar** (sync bidireccional o import + bloqueo, a definir)
-- [ ] Roles mínimos: médico + recepción
-- [ ] Onboarding simple: crear cuenta → conectar calendario → ver agenda
-
-Criterio de éxito v1: un médico deja de mantener dos agendas manuales para el flujo principal de turnos del consultorio.
-
----
-
-## 4. Fuera de alcance v1
-
-Explicitamente **no** en v1:
-
-- Telemedicina / videollamadas
-- Facturación / obras sociales / liquidaciones
-- Historia clínica completa (HCE)
-- App móvil nativa
-- Marketplace de turnos públicos
-- IA de diagnóstico o sugerencias clínicas
-- Multi-país / compliance formal (HIPAA, etc.) más allá de buenas prácticas básicas de acceso
-
----
-
-## 5. Arquitectura objetivo
+No metemos HCE, telemedicina ni facturación de obras sociales en esta fase.
 
 ```text
-Doctor / Recepción
-        │
-        ▼
-   Next.js App (App Router)
-        │
-        ├──────────────► Supabase (Auth + Postgres + RLS)
-        │                      │
-        │                      └── reglas anti-solapamiento
-        │
-        ├──────────────► Google Calendar
-        └──────────────► Otras herramientas (fase 2+)
+Paciente                Médico / Clínica              Comunidad
+   │                         │                            │
+   ▼                         ▼                            ▼
+Mallanet (directorio)   Waira ($100/mes)            Donación opcional
+   │                         │                      → Mallanet
+   └──── landing ────────────┘
+              │
+              ▼
+         mvpMedico (agenda + asistente + sync)
 ```
 
-Principios:
+---
 
-- **Postgres** es la fuente de verdad de turnos internos
-- Las integraciones **nunca** pueden saltarse las reglas de conflicto sin dejar evidencia
-- Autorización con **Row Level Security (RLS)** por clínica / médico
-- API routes o Server Actions de Next.js para orquestar sync con externos
+## 3. Glosario
 
-### Modelo de datos mínimo (propuesta)
+| Término | Definición |
+| --- | --- |
+| **Waira** | Marca que vende la membresía y hace el onboarding del médico |
+| **Mallanet** | Hub: directorio público, donaciones, reputación compartida |
+| **mvpMedico** | Nombre técnico del producto/repo (agenda + landing + sync) |
+| **Membresía** | $100 USD/mes: presencia + landing + asistente + agenda |
+| **Perfil de directorio** | Ficha pública en Mallanet (especialidad, zona, enlace a la landing) |
+| **Landing** | Página del médico entre el descubrimiento y la reserva/contacto |
+| **Asistente** | Flujo automatizado de contacto/reserva que crea turnos en la agenda (en v1, web) |
+| **Agenda central** | Fuente de verdad de disponibilidad y turnos (Postgres) |
+| **Recurso** | En v1, un médico |
+| **Turno** | Intervalo reservado (`starts_at`–`ends_at`) de un recurso |
+| **Solape** | Dos turnos activos del mismo recurso que se cruzan (no permitido) |
+| **Donación Mallanet** | Aporte voluntario del paciente o la comunidad; no es el precio del producto |
+| **Clínica** | Organización dueña de recursos; en v1 suele ser un médico = una clínica simple |
+| **Recepción** | Persona que crea y mueve turnos, además del asistente |
 
-Entidades iniciales a modelar en Supabase:
+---
+
+## 4. Dinero
+
+| | |
+| --- | --- |
+| Quién paga | Médico o clínica |
+| Cuánto | $100 USD/mes por membresía activa |
+| Meta | ≥100 membresías (~$10 000 MRR) |
+| Incluye | Perfil Mallanet + landing + asistente + agenda + Google Calendar (busy/bloqueo) |
+| Donación | Opcional, a Mallanet; no sustituye la membresía |
+| Cobro | Waira cobra la suscripción; Mallanet no |
+
+Éxito de negocio en esta fase: poder sostener 100 membresías sin que alguien del equipo arme a mano cada turno.
+
+---
+
+## 5. Roles (v1)
+
+| Rol | Hace |
+| --- | --- |
+| **Médico** | Agenda, bloques, confirma/cancela, conecta Google Calendar, edita perfil y landing |
+| **Recepción** | Crea y mueve turnos, mira disponibilidad real |
+| **Paciente** | Encuentra al médico en Mallanet → landing → pide turno o contacto (sin cuenta obligatoria) |
+| **Admin Waira** | Activa membresías, publica u oculta perfiles en el directorio |
+
+Permisos finos y multi-sede quedan fuera de v1.
+
+---
+
+## 6. MVP v1 — entra
+
+- [ ] Auth (Supabase): médico + recepción
+- [ ] Onboarding: cuenta → perfil → conectar calendario → publicar landing
+- [ ] Perfil de directorio + flag “publicado en Mallanet”
+- [ ] Landing por médico (especialidad, bio corta, CTA de reserva/contacto)
+- [ ] Calendario por médico (`resource`)
+- [ ] CRUD de turnos
+- [ ] Anti-solapamiento
+- [ ] Formulario/asistente web que crea el turno (mensajería después, si hace falta)
+- [ ] Datos mínimos del paciente visibles junto al turno
+- [ ] Google Calendar: importar ocupado y bloquear huecos (sin sync bidireccional completo)
+- [ ] Vista de conflictos si algo externo choca
+- [ ] CTA opcional de donación a Mallanet en la landing (no bloquea la reserva)
+
+Éxito de producto: el médico con membresía es encontrable, tiene landing viva, y deja de mantener dos agendas a mano para el flujo principal de turnos.
+
+## 7. MVP v1 — no entra
+
+- Telemedicina
+- Facturación / obras sociales
+- Historia clínica completa
+- App nativa
+- Marketplace de precios o subasta de turnos
+- IA de diagnóstico
+- Escritura agresiva bidireccional a Google Calendar
+- Multi-país / HIPAA formal (más allá de acceso básico bien hecho)
+- Vivir solo de donaciones
+- Un médico en N clínicas el día 1
+
+---
+
+## 8. Arquitectura
+
+```text
+Paciente ──► Mallanet ──► Landing ──► Asistente / form
+                                          │
+Médico / Recepción ──► Next.js ◄──────────┘
+                         │
+                         ├─► Supabase (Auth + Postgres + RLS) ─ anti-solape
+                         ├─► Google Calendar (leer busy + bloquear)
+                         └─► Mallanet (publicar perfil / CTA donación)
+```
+
+- Postgres guarda la verdad de los turnos internos
+- Una integración no puede saltarse el anti-solape sin dejar rastro
+- RLS por clínica / médico
+- Server Actions o API routes para sync y publicación de perfil
+- Landing y app en el mismo Next.js (rutas públicas vs autenticadas)
+
+### Tablas mínimas
 
 - `profiles` — usuario y rol
 - `clinics` — organización
-- `clinic_members` — membresía y rol
-- `resources` — médico / consultorio / recurso bookable
-- `appointments` — turnos (`starts_at`, `ends_at`, `status`, `patient_*`, `resource_id`)
-- `external_connections` — OAuth / tokens de integración
-- `external_events` — espejo de eventos externos para detección de conflictos
+- `clinic_members` — membresía y rol en la clínica
+- `memberships` — suscripción Waira (activo/pausado)
+- `resources` — médico bookable
+- `directory_profiles` — ficha pública + `published_to_mallanet`
+- `landings` — slug, copy, CTA, flag donación
+- `appointments` — turnos
+- `patients_min` — nombre, teléfono, email opcional
+- `external_connections` — OAuth Google
+- `external_events` — espejo de busy para conflictos
 
-Constraint sugerido: exclusión de rangos solapados por `resource_id` en turnos activos (vía exclusion constraint de Postgres o validación en transacción).
+Constraint: no dos turnos activos solapados por `resource_id`.
+
+Límites de v1: una timezone IANA por clínica; sin multi-sede.
 
 ---
 
-## 6. Stack y convenciones
-
-### Stack
+## 9. Stack y convenciones
 
 | Capa | Tecnología |
 | --- | --- |
-| App / UI | Next.js (App Router) + TypeScript + Tailwind CSS |
-| Backend / Auth / DB | Supabase (Postgres, Auth, RLS) |
+| App / landings | Next.js (App Router) + TypeScript + Tailwind |
+| Backend | Supabase (Postgres, Auth, RLS) |
+| Hosting | Vercel + Supabase cloud |
+| Pagos | Por definir (Stripe o equivalente LatAm); no bloquea el scaffold de agenda |
 | E2E | Playwright |
 | Repo | GitHub |
 
-### Convenciones
+- Docs y producto: español
+- Código, commits, nombres de archivos/variables: inglés
+- Ramas: `feature/`, `fix/`, `chore/` desde `main`
+- PRs chicos, una preocupación, con el *por qué*
+- Con 2+ personas activas: al menos un approve antes de merge a `main`
+- Secretos fuera del repo (`.env.local`, Vercel, Supabase)
+- Tests E2E: crear turno, rechazar solape, cancelar, reservar desde landing
 
-- **Docs y discusión de producto:** español
-- **Código, commits técnicos, nombres de variables/archivos:** inglés
-- **Ramas:** `feature/<corto>`, `fix/<corto>`, `chore/<corto>` desde `main`
-- **PRs:** pequeños, 1 preocupación, descripción del *por qué*
-- **No mergear a `main` sin revisión** (al menos 1 approve cuando haya 2+ personas activas)
-- **Secretos:** nunca en el repo; `.env.local` + variables en Supabase/Vercel
-- **Tests:** caminos críticos de agenda (crear turno, solape rechazado, cancelar) con Playwright
-
-### Estructura de repo (cuando se scaffoldee)
+Cuando exista el repo:
 
 ```text
 /
-├── base.md                 ← este documento
-├── README.md               ← setup local rápido
-├── apps/web o /            ← Next.js (decisión al scaffold)
-├── supabase/               ← migrations, policies
-└── e2e/                    ← Playwright
+├── base.md          ← este documento
+├── README.md
+├── apps/web o /     ← Next.js
+├── supabase/
+└── e2e/
 ```
 
 ---
 
-## 7. Cómo colaborar
+## 10. Decisiones cerradas (2026-07-20)
 
-### Onboarding
+| # | Tema | Decisión | Motivo |
+| --- | --- | --- | --- |
+| 1 | Reserva | Paciente desde landing **y** recepción/médico en la agenda | Sin paciente no sirve el directorio; sin recepción no cierra la clínica |
+| 2 | Google Calendar | v1 = leer busy + bloquear; sync full = fase 2 | Menos chance de romper el calendario del médico |
+| 3 | Unidad | Por médico | Consultorio/sala después |
+| 4 | Datos paciente | Nombre + teléfono; email opcional | Alcanza para contactar |
+| 5 | Multi-clínica | No en v1 | Onboarding y RLS más simples |
+| 6 | Timezone | Una IANA por clínica | Evita líos de solape entre zonas |
+| 7 | Nombres | Waira vende; mvpMedico = técnico; Mallanet = hub | Marca, producto y comunidad separados |
+| 8 | Hosting | Vercel + Supabase | Rápido para landings |
+| 9 | Ingreso | Membresía $100; donación Mallanet aparte | Meta 100×$100 sin mezclar con donación |
+| 10 | Asistente v1 | Formulario web; mensajería después | Sin depender de WhatsApp Business el día 1 |
 
-1. Clonar el repo y leer este `base.md`
-2. Pedir acceso al proyecto Supabase / Vercel cuando existan
-3. Crear rama desde `main`
-4. Abrir PR aunque sea solo docs
-
-### Cómo proponer cambios de producto
-
-1. Editar la sección correspondiente de `base.md` en un PR
-2. Marcar ítems en [Decisiones abiertas](#8-decisiones-abiertas) como propuesta (`Propuesta: ...`)
-3. En el PR, listar trade-offs en 3–5 líneas
-4. Tras merge, actualizar "Última actualización" arriba
-
-### Rituales sugeridos
-
-- **Weekly corto:** cerrar 1–2 decisiones abiertas
-- **Demo:** cada PR de feature debería poder mostrarse en UI o con test E2E
+Reabrir solo si choca con implementación, legal o pagos.
 
 ---
 
-## 8. Decisiones abiertas
+## 11. Cómo trabajar
 
-Para cerrar juntos en las próximas sesiones:
+1. Leer este documento
+2. Pedir acceso a Supabase / Vercel / pagos cuando existan
+3. Rama desde `main`
+4. PR aunque sea solo docs
 
-1. **Flujo de reserva:** ¿el paciente reserva online en v1 o solo recepción/médico?
-2. **Google Calendar:** ¿sync bidireccional completo o “bloquear cuando hay evento externo”?
-3. **Unidad de scheduling:** ¿por médico, por consultorio, o ambos?
-4. **Datos del paciente en v1:** mínimos (nombre + teléfono) vs. ficha más rica
-5. **Multi-clínica:** ¿un médico en varias clínicas desde el día 1?
-6. **Timezone y feriados:** reglas por clínica / país
-7. **Nombre comercial** del producto (mvpMedico es nombre de repo/proyecto)
-8. **Hosting:** Vercel para Next.js (propuesta por defecto)
+Cambio de producto: editar la sección (y el glosario si cambia un término). Si reabrís una fila de §10, en el PR: `Propuesta: …` y 3–5 líneas de trade-off. Actualizar la fecha arriba al mergear.
+
+Weekly: avance hacia 100 membresías y una mejora landing→turno. Cada feature debería poder verse en UI o en un E2E.
 
 ---
 
-## 9. Próximos pasos técnicos
-
-Orden sugerido después de estabilizar este doc:
+## 12. Próximos pasos técnicos
 
 1. Scaffold Next.js + TypeScript + Tailwind
-2. Crear proyecto Supabase y carpeta `supabase/migrations`
-3. Auth (email magic link o email/password)
-4. Tablas `profiles`, `resources`, `appointments` + RLS
-5. UI de calendario semanal mínima
-6. Regla anti-solapamiento + tests E2E
-7. Conector Google Calendar (OAuth + sync inicial)
-8. README de setup local para el equipo
+2. Proyecto Supabase + migrations (tablas §8)
+3. Auth (magic link o email/password)
+4. RLS + anti-solape + E2E
+5. Calendario semanal mínimo
+6. Landing pública por slug + formulario de reserva
+7. Google Calendar OAuth (busy + block)
+8. `memberships` + flag publicar a Mallanet (al inicio puede ser manual)
+9. CTA donación Mallanet en la landing
+10. README de setup local
 
 ---
 
-## Changelog del documento
+## Changelog
 
 | Fecha | Cambio |
 | --- | --- |
-| 2026-07-20 | Creación inicial: visión, MVP, stack, colaboración |
+| 2026-07-20 | Primera versión: visión, MVP, stack |
+| 2026-07-20 | Negocio Waira $100×100, Mallanet, landing+asistente, decisiones cerradas |
+| 2026-07-20 | Unificado con CONTEXT (un solo doc) |
