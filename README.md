@@ -57,9 +57,18 @@ npm run dev
 
 Abrí [http://localhost:3000](http://localhost:3000).
 
-### 4. Primer médico
+### 4. Primer médico (o seed)
 
-1. `/signup` → crea `profiles`, clínica, `resource`, landing draft y membresía `paused`
+**Opción A — seed local** (después de `db reset`):
+
+| Usuario | Password | Notas |
+| --- | --- | --- |
+| `doctor@example.com` | `password123` | membresía activa, landing `/l/dra-demo` |
+| `admin@example.com` | `password123` | rol `admin_waira` |
+
+**Opción B — signup:**
+
+1. `/signup` → crea `profiles`, clínica, `resource`, landing draft y membresía `paused` (triggers)
 2. Activá membresía (SQL o Admin Waira):
 
 ```sql
@@ -69,9 +78,9 @@ update public.profiles set role = 'admin_waira' where id = '<user-id>';
 ```
 
 3. `/onboarding` → publicar landing
-4. `/calendar` → crear turnos (anti-solape en DB)
-5. `/l/<slug>` → reserva pública
-6. `/settings/google` → OAuth + sync FreeBusy (requiere vars Google)
+4. `/calendar` → grilla Lun–Sáb 08–20 (anti-solape en DB)
+5. `/l/<slug>` → reserva pública con slots de 30 min
+6. `/settings/google` → OAuth + sync FreeBusy (requiere vars Google; sin ellas → 501)
 
 ## Scripts
 

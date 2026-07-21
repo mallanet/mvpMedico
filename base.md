@@ -2,8 +2,8 @@
 
 Documento de alineación del equipo. Si algo de producto cambia, se edita acá (mejor en un PR que en un chat suelto).
 
-**Última actualización:** 2026-07-20  
-**Estado:** decisiones de arranque cerradas
+**Última actualización:** 2026-07-21  
+**Estado:** wire-up MVP funcional (agenda visual + slots + seed + gating)
 
 Nombres que usamos: **Waira** vende; **mvpMedico** es el repo y el producto técnico; **Mallanet** es el hub (directorio y donaciones).
 
@@ -233,7 +233,7 @@ Weekly: avance hacia 100 membresías y una mejora landing→turno. Cada feature 
 2. [x] Proyecto Supabase + migrations (tablas §8)
 3. [x] Auth (email/password)
 4. [x] RLS + anti-solape (+ smoke E2E)
-5. [ ] Calendario semanal visual (hoy: lista de turnos)
+5. [x] Calendario semanal visual (grilla Lun–Sáb 08–20)
 6. [x] Landing pública por slug + formulario de reserva
 7. [x] Google Calendar OAuth (busy + block) — falta probar con credenciales reales
 8. [x] `memberships` + flag publicar a Mallanet (manual / admin)
@@ -248,23 +248,23 @@ Orden sugerido de trabajo. El scaffold de §6 está en el repo; esto es lo que f
 
 ### Crítico
 
-1. **Disponibilidad + slots** — horario de atención y turnos bookables (hoy se elige cualquier hora a mano)
-2. **Calendario semanal visual** — grilla usable para médico/recepción
-3. **Rol recepción** — invitar/usar recepción; signup hoy solo bootstrapéa médico
-4. **Cobro membresía** — Stripe u equivalente LatAm (hoy stub `active`/`paused`)
-5. **Deploy cloud** — Vercel + Supabase cloud (URL compartible)
+1. [x] **Disponibilidad + slots** — horario de atención y turnos bookables (30 min, Lun–Sáb)
+2. [x] **Calendario semanal visual** — grilla usable para médico/recepción
+3. [ ] **Rol recepción** — invitar/usar recepción; signup hoy solo bootstrapéa médico
+4. [ ] **Cobro membresía** — Stripe u equivalente LatAm (hoy stub `active`/`paused`/`cancelled`)
+5. [ ] **Deploy cloud** — Vercel + Supabase cloud (URL compartible)
 
 ### Integraciones / producto
 
-6. **Google Calendar E2E** — OAuth real + sync FreeBusy en un calendario de prueba
-7. **API Mallanet** — publicación real al directorio (hoy: flag + CTA)
-8. **Notificaciones** — email (o canal) al crear/cancelar turno
-9. **Confirmar turno** — flujo claro médico/recepción → `confirmed`
+6. [ ] **Google Calendar E2E** — OAuth real + sync FreeBusy en un calendario de prueba
+7. [ ] **API Mallanet** — publicación real al directorio (hoy: flag + CTA)
+8. [ ] **Notificaciones** — email (o canal) al crear/cancelar turno
+9. [ ] **Confirmar turno** — flujo claro médico/recepción → `confirmed`
 
 ### Calidad / equipo
 
-10. **E2E de caminos críticos** — crear turno, rechazar solape, cancelar, reservar landing (con `E2E_*`)
-11. **Seed demo** — médico + landing + turnos de ejemplo para demos
+10. [x] **E2E de caminos críticos** — smoke siempre; agenda/landing/admin con `E2E_*`
+11. [x] **Seed demo** — `doctor@example.com` / `admin@example.com` + landing `dra-demo`
 
 Fuera de v1: ver §7.
 
@@ -274,6 +274,7 @@ Fuera de v1: ver §7.
 
 | Fecha | Cambio |
 | --- | --- |
+| 2026-07-21 | Wire-up: grilla semanal, slots públicos, seed demo, membership cancelled, E2E ampliados |
 | 2026-07-20 | Primera versión: visión, MVP, stack |
 | 2026-07-20 | Negocio Waira $100×100, Mallanet, landing+asistente, decisiones cerradas |
 | 2026-07-20 | Unificado con CONTEXT (un solo doc) |
