@@ -42,6 +42,8 @@ export function BookingConfirmation({
         {patientName}, pediste turno con {doctorName} para el{" "}
         <strong>
           {format(parseISO(startsAt), "EEEE d MMMM HH:mm", { locale: es })}
+          {" – "}
+          {format(parseISO(endsAt), "HH:mm", { locale: es })}
         </strong>
         .
         {isDemo

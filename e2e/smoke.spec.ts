@@ -39,11 +39,12 @@ test.describe("smoke", () => {
     await expect(page.getByLabel(/nombre del doctor/i)).toBeVisible();
 
     const seedLabel = await page.evaluate(() => {
-      const key = "waira-preview-sandbox-v2";
-      const windows = [1, 2, 3, 4, 5].flatMap((weekday) => [
-        { weekday, start: "09:00", end: "13:00" },
-        { weekday, start: "15:00", end: "18:00" },
-      ]);
+      const key = "waira-preview-sandbox-v3";
+      const windows = [1, 2, 3, 4, 5, 6].map((weekday) => ({
+        weekday,
+        start: "08:00",
+        end: "20:00",
+      }));
       const doctor = {
         id: "sandbox-doctor",
         displayName: "Dra. Demo Waira",
@@ -92,9 +93,8 @@ test.describe("smoke", () => {
     await expect(page.getByText(/paciente seed/i)).toBeVisible();
     await expect(page.getByText(/metropolitano/i).first()).toBeVisible();
 
-    // Same instant must be rejected for Vozandes by the store API (overlap global)
     const createBlocked = await page.evaluate((startsAt) => {
-      const key = "waira-preview-sandbox-v2";
+      const key = "waira-preview-sandbox-v3";
       const doctor = JSON.parse(localStorage.getItem(key)!);
       const endsAt = new Date(
         new Date(startsAt).getTime() + 30 * 60 * 1000,
@@ -118,6 +118,9 @@ test.describe("smoke", () => {
       page.getByRole("heading", { level: 1, name: /vozandes/i }),
     ).toBeVisible();
     await expect(page.getByRole("form", { name: /pedir turno/i })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /^\d{2}:\d{2}$/ }).first(),
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test("login page renders auth form", async ({ page }) => {

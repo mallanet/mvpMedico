@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarErrorBoundary } from "@/components/calendar/error-boundary";
 import { CalendarGrid } from "@/components/calendar/calendar-grid";
 import {
@@ -13,11 +13,14 @@ import {
 import type { Appointment } from "@/lib/types";
 
 export function PreviewSandboxCalendar({ clinicId }: { clinicId: string }) {
+  const [ready, setReady] = useState(false);
   const [tick, setTick] = useState(0);
+  useEffect(() => setReady(true), []);
   const appointments = useMemo(() => {
     void tick;
+    if (!ready) return [];
     return listSandboxAppointments(clinicId);
-  }, [clinicId, tick]);
+  }, [clinicId, tick, ready]);
 
   const reload = useCallback(() => setTick((t) => t + 1), []);
 
@@ -40,6 +43,14 @@ export function PreviewSandboxCalendar({ clinicId }: { clinicId: string }) {
     }),
     [clinicId],
   );
+
+  if (!ready) {
+    return (
+      <p className="text-sm text-[color:var(--foreground)]/65">
+        Cargando agenda…
+      </p>
+    );
+  }
 
   return (
     <CalendarErrorBoundary>

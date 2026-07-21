@@ -1,18 +1,16 @@
 "use client";
 
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { bookFromLanding, listAvailableSlots } from "@/lib/appointments";
 import {
   createSandboxAppointment,
+  findNextSandboxDateWithSlots,
   listSandboxAvailableSlots,
 } from "@/lib/preview-sandbox";
-import {
-  dateInputValue,
-  nextBookableDays,
-} from "@/lib/slots";
+import { dateInputValue, nextBookableDays } from "@/lib/slots";
 import type { TimeSlot } from "@/lib/types";
 import { BookingConfirmation } from "@/components/booking/confirmation";
 import { SlotPicker } from "@/components/booking/slot-picker";
@@ -35,7 +33,7 @@ export function BookingWidget({
   embedded = false,
 }: Props) {
   const days = useMemo(() => nextBookableDays(14), []);
-  const [date, setDate] = useState(dateInputValue(days[0]));
+  const [date, setDate] = useState(() => dateInputValue(days[0]));
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [selected, setSelected] = useState<TimeSlot | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(true);
@@ -46,6 +44,15 @@ export function BookingWidget({
     endsAt: string;
     patientName: string;
   } | null>(null);
+  const didInitDate = useRef(false);
+
+  // Client-only: land on a day that actually has openings (avoids hydration mismatch)
+  useEffect(() => {
+    if (!sandboxClinicId || didInitDate.current) return;
+    didInitDate.current = true;
+    const next = findNextSandboxDateWithSlots(sandboxClinicId, days);
+    if (next) setDate(next);
+  }, [sandboxClinicId, days]);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,7 +81,6 @@ export function BookingWidget({
       setLoadingSlots(false);
       if (!result.ok) {
         setError(result.error);
-        // Keep previous slots visible to avoid mid-flow blank flash
         return;
       }
       setSlots(result.slots);
@@ -155,12 +161,20 @@ export function BookingWidget({
           isDemo={Boolean(sandboxClinicId)}
         />
         {sandboxClinicId ? (
-          <Link
-            href={`/preview/agenda?clinic=${encodeURIComponent(sandboxClinicId)}`}
-            className="btn btn-primary w-full"
-          >
-            Ver agenda demo
-          </Link>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Link
+              href={`/preview/agenda?clinic=${encodeURIComponent(sandboxClinicId)}`}
+              className="btn btn-primary w-full"
+            >
+              Ver agenda de la clínica
+            </Link>
+            <Link
+              href="/preview/doctor/calendar"
+              className="btn btn-secondary w-full"
+            >
+              Calendario master
+            </Link>
+          </div>
         ) : null}
       </div>
     );
@@ -215,6 +229,32 @@ export function BookingWidget({
         onSelect={setSelected}
       />
 
+      {!loadingSlots && slots.length === 0 && !error && sandboxClinicId ? (
+        <p className="text-sm text-[color:var(--foreground)]/70" role="status">
+          No hay horarios libres ese día. Probá otra fecha o ajustá bloques en
+          el{" "}
+          <Link
+            href="/preview/doctor"
+            className="font-medium text-[color:var(--brand-forest)] underline underline-offset-2"
+          >
+            panel doctor
+          </Link>
+          .
+        </p>
+      ) : null}
+
+      {selected ? (
+        <p className="rounded-[var(--radius-control)] bg-[color:var(--brand-foam)] px-3 py-2 text-sm text-[color:var(--foreground)]">
+          Horario elegido:{" "}
+          <strong>
+            {format(parseISO(selected.startsAt), "EEE d MMM · HH:mm", {
+              locale: es,
+            })}
+            –{format(parseISO(selected.endsAt), "HH:mm", { locale: es })}
+          </strong>
+        </p>
+      ) : null}
+
       <label className="flex flex-col gap-1.5 text-sm text-teal-950">
         Tu nombre
         <input name="patientName" required autoComplete="name" className="field" />
@@ -241,12 +281,20 @@ export function BookingWidget({
       </label>
       <label className="flex flex-col gap-1.5 text-sm text-teal-950">
         Motivo / notas
-        <textarea name="notes" rows={3} className="field min-h-[5.5rem] resize-y" />
+        <textarea name="notes" rows={2} className="field min-h-[4.5rem] resize-y" />
       </label>
 
       {error ? (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
-          {error}
+          {error}{" "}
+          {error.includes("panel del doctor") || error.includes("afiliada") ? (
+            <Link
+              href="/preview/doctor"
+              className="font-medium underline underline-offset-2"
+            >
+              Abrir panel doctor
+            </Link>
+          ) : null}
         </p>
       ) : null}
 
@@ -255,7 +303,11 @@ export function BookingWidget({
         disabled={loading || !selected}
         className="btn btn-primary w-full"
       >
-        {loading ? "Enviando…" : "Confirmar turno"}
+        {loading
+          ? "Confirmando…"
+          : selected
+            ? "Confirmar turno"
+            : "Elegí un horario para confirmar"}
       </button>
     </form>
   );

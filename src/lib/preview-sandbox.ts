@@ -7,6 +7,7 @@ import { OVERLAP_MESSAGE, type Appointment, type TimeSlot } from "@/lib/types";
 
 const STORAGE_V1 = "waira-preview-sandbox-v1";
 const STORAGE_V2 = "waira-preview-sandbox-v2";
+const STORAGE_V3 = "waira-preview-sandbox-v3";
 
 export const SANDBOX_DOCTOR_ID = "sandbox-doctor";
 
@@ -37,10 +38,13 @@ export type SandboxResult =
   | { ok: true; id?: string }
   | { ok: false; error: string };
 
-const DEFAULT_WINDOWS: PresenceWindow[] = [1, 2, 3, 4, 5].flatMap((weekday) => [
-  { weekday: weekday as PresenceWeekday, start: "09:00", end: "13:00" },
-  { weekday: weekday as PresenceWeekday, start: "15:00", end: "18:00" },
-]);
+const DEFAULT_WINDOWS: PresenceWindow[] = [1, 2, 3, 4, 5, 6].map(
+  (weekday) => ({
+    weekday: weekday as PresenceWeekday,
+    start: "08:00",
+    end: "20:00",
+  }),
+);
 
 const DEFAULT_CLINIC_IDS = [
   "metropolitano-quito",
@@ -105,9 +109,9 @@ function migrateFromV1(): DoctorSandbox | null {
 function readDoctor(): DoctorSandbox {
   if (typeof window === "undefined") return emptyDoctor();
   try {
-    const raw = window.localStorage.getItem(STORAGE_V2);
-    if (raw) {
-      const parsed = JSON.parse(raw) as DoctorSandbox;
+    const rawV3 = window.localStorage.getItem(STORAGE_V3);
+    if (rawV3) {
+      const parsed = JSON.parse(rawV3) as DoctorSandbox;
       if (parsed?.id && Array.isArray(parsed.affiliations)) {
         return {
           ...defaultDoctor(),
@@ -116,6 +120,29 @@ function readDoctor(): DoctorSandbox {
         };
       }
     }
+
+    // v2 → v3: keep appointments/affiliations, refresh presence to full demo day
+    const rawV2 = window.localStorage.getItem(STORAGE_V2);
+    if (rawV2) {
+      const parsed = JSON.parse(rawV2) as DoctorSandbox;
+      if (parsed?.id && Array.isArray(parsed.affiliations)) {
+        const upgraded: DoctorSandbox = {
+          ...defaultDoctor(),
+          ...parsed,
+          affiliations: (parsed.affiliations.length
+            ? parsed.affiliations
+            : defaultDoctor().affiliations
+          ).map((a) => ({
+            clinicId: a.clinicId,
+            windows: DEFAULT_WINDOWS.map((w) => ({ ...w })),
+          })),
+          appointmentsByClinic: parsed.appointmentsByClinic ?? {},
+        };
+        writeDoctor(upgraded);
+        return upgraded;
+      }
+    }
+
     const migrated = migrateFromV1();
     if (migrated) {
       writeDoctor(migrated);
@@ -131,7 +158,7 @@ function readDoctor(): DoctorSandbox {
 
 function writeDoctor(doctor: DoctorSandbox) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_V2, JSON.stringify(doctor));
+  window.localStorage.setItem(STORAGE_V3, JSON.stringify(doctor));
 }
 
 export function getSandboxDoctor(): DoctorSandbox {
@@ -272,6 +299,19 @@ export function listSandboxAvailableSlots(
   return { ok: true, slots: inWindow };
 }
 
+/** First bookable date (yyyy-MM-dd) with at least one free slot, or null. */
+export function findNextSandboxDateWithSlots(
+  clinicId: string,
+  fromDays: Date[],
+): string | null {
+  for (const day of fromDays) {
+    const iso = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+    const result = listSandboxAvailableSlots(clinicId, iso);
+    if (result.ok && result.slots.length > 0) return iso;
+  }
+  return null;
+}
+
 export function createSandboxAppointment(
   clinicId: string,
   input: {
@@ -404,6 +444,15 @@ export function cancelSandboxAppointment(
   doctor.appointmentsByClinic[clinicId] = next;
   writeDoctor(doctor);
   return { ok: true };
+}
+
+export function applyDemoPresenceWindows(): DoctorSandbox {
+  const current = readDoctor();
+  const affiliations = current.affiliations.map((a) => ({
+    clinicId: a.clinicId,
+    windows: DEFAULT_WINDOWS.map((w) => ({ ...w })),
+  }));
+  return saveSandboxDoctor({ affiliations });
 }
 
 /** Reset helper for tests / UI */

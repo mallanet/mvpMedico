@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { isClinicAffiliated } from "@/lib/preview-sandbox";
 
 export function AffiliationGate({ clinicId }: { clinicId: string }) {
-  const [tick] = useState(0);
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
   const affiliated = useMemo(() => {
-    void tick;
+    if (!ready) return true;
     return isClinicAffiliated(clinicId);
-  }, [clinicId, tick]);
+  }, [clinicId, ready]);
 
   if (affiliated) return null;
 

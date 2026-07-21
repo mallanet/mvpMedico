@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getSandboxDoctor,
   listAllSandboxAppointments,
@@ -19,31 +19,46 @@ const ACCENT = [
 ];
 
 export function MasterCalendar({ clinics }: { clinics: EcuadorClinic[] }) {
+  const [ready, setReady] = useState(false);
   const [tick, setTick] = useState(0);
+  useEffect(() => setReady(true), []);
+
   const doctor = useMemo(() => {
     void tick;
+    if (!ready) return null;
     return getSandboxDoctor();
-  }, [tick]);
+  }, [tick, ready]);
   const appointments = useMemo(() => {
     void tick;
+    if (!ready) return [];
     return listAllSandboxAppointments().filter((a) => a.status !== "cancelled");
-  }, [tick]);
+  }, [tick, ready]);
 
   const clinicName = (id: string) =>
     clinics.find((c) => c.id === id)?.name ?? id;
 
   const colorIndex = (clinicId: string) => {
+    if (!doctor) return 0;
     const idx = doctor.affiliations.findIndex((a) => a.clinicId === clinicId);
     return Math.max(0, idx) % ACCENT.length;
   };
+
+  if (!ready || !doctor) {
+    return (
+      <p className="text-sm text-[color:var(--foreground)]/65">
+        Cargando calendario…
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-[color:var(--foreground)]/70">
-          {doctor.displayName} · {appointments.length} turno
-          {appointments.length === 1 ? "" : "s"} activo
-          {appointments.length === 1 ? "" : "s"}
+          {doctor.displayName} ·{" "}
+          {appointments.length === 1
+            ? "1 turno activo"
+            : `${appointments.length} turnos activos`}
         </p>
         <button
           type="button"

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  applyDemoPresenceWindows,
   getSandboxDoctor,
   saveSandboxDoctor,
   type Affiliation,
@@ -20,10 +21,13 @@ const WEEKDAYS: { value: PresenceWeekday; label: string }[] = [
   { value: 6, label: "Sáb" },
 ];
 
-const DEFAULT_WINDOWS: PresenceWindow[] = [1, 2, 3, 4, 5].flatMap((weekday) => [
-  { weekday: weekday as PresenceWeekday, start: "09:00", end: "13:00" },
-  { weekday: weekday as PresenceWeekday, start: "15:00", end: "18:00" },
-]);
+const DEFAULT_WINDOWS: PresenceWindow[] = [1, 2, 3, 4, 5, 6].map(
+  (weekday) => ({
+    weekday: weekday as PresenceWeekday,
+    start: "08:00",
+    end: "20:00",
+  }),
+);
 
 function formatWindows(windows: PresenceWindow[]): string {
   if (windows.length === 0) return "Sin bloques";
@@ -39,14 +43,26 @@ function formatWindows(windows: PresenceWindow[]): string {
 }
 
 export function DoctorPanel({ clinics }: { clinics: EcuadorClinic[] }) {
+  const [ready, setReady] = useState(false);
   const [tick, setTick] = useState(0);
+  useEffect(() => setReady(true), []);
   const doctor = useMemo(() => {
     void tick;
+    if (!ready) return null;
     return getSandboxDoctor();
-  }, [tick]);
+  }, [tick, ready]);
   const reload = useCallback(() => setTick((t) => t + 1), []);
 
-  const affiliatedIds = new Set(doctor.affiliations.map((a) => a.clinicId));
+  if (!ready || !doctor) {
+    return (
+      <p className="text-sm text-[color:var(--foreground)]/65">
+        Cargando panel…
+      </p>
+    );
+  }
+
+  const current = doctor;
+  const affiliatedIds = new Set(current.affiliations.map((a) => a.clinicId));
 
   function updateName(displayName: string) {
     saveSandboxDoctor({ displayName });
@@ -54,13 +70,13 @@ export function DoctorPanel({ clinics }: { clinics: EcuadorClinic[] }) {
   }
 
   function toggleClinic(clinicId: string) {
-    const exists = doctor.affiliations.find((a) => a.clinicId === clinicId);
+    const exists = current.affiliations.find((a) => a.clinicId === clinicId);
     let affiliations: Affiliation[];
     if (exists) {
-      affiliations = doctor.affiliations.filter((a) => a.clinicId !== clinicId);
+      affiliations = current.affiliations.filter((a) => a.clinicId !== clinicId);
     } else {
       affiliations = [
-        ...doctor.affiliations,
+        ...current.affiliations,
         {
           clinicId,
           windows: DEFAULT_WINDOWS.map((w) => ({ ...w })),
@@ -72,7 +88,7 @@ export function DoctorPanel({ clinics }: { clinics: EcuadorClinic[] }) {
   }
 
   function updateWindows(clinicId: string, windows: PresenceWindow[]) {
-    const affiliations = doctor.affiliations.map((a) =>
+    const affiliations = current.affiliations.map((a) =>
       a.clinicId === clinicId ? { ...a, windows } : a,
     );
     saveSandboxDoctor({ affiliations });
@@ -80,7 +96,7 @@ export function DoctorPanel({ clinics }: { clinics: EcuadorClinic[] }) {
   }
 
   function addWindow(clinicId: string) {
-    const aff = doctor.affiliations.find((a) => a.clinicId === clinicId);
+    const aff = current.affiliations.find((a) => a.clinicId === clinicId);
     if (!aff) return;
     updateWindows(clinicId, [
       ...aff.windows,
@@ -89,7 +105,7 @@ export function DoctorPanel({ clinics }: { clinics: EcuadorClinic[] }) {
   }
 
   function removeWindow(clinicId: string, index: number) {
-    const aff = doctor.affiliations.find((a) => a.clinicId === clinicId);
+    const aff = current.affiliations.find((a) => a.clinicId === clinicId);
     if (!aff) return;
     updateWindows(
       clinicId,
@@ -102,7 +118,7 @@ export function DoctorPanel({ clinics }: { clinics: EcuadorClinic[] }) {
     index: number,
     patch: Partial<PresenceWindow>,
   ) {
-    const aff = doctor.affiliations.find((a) => a.clinicId === clinicId);
+    const aff = current.affiliations.find((a) => a.clinicId === clinicId);
     if (!aff) return;
     updateWindows(
       clinicId,
@@ -117,13 +133,28 @@ export function DoctorPanel({ clinics }: { clinics: EcuadorClinic[] }) {
           Nombre del doctor demo
           <input
             className="field"
-            value={doctor.displayName}
+            value={current.displayName}
             onChange={(e) => updateName(e.target.value)}
           />
         </label>
-        <Link href="/preview/doctor/calendar" className="btn btn-primary">
-          Calendario master
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => {
+              applyDemoPresenceWindows();
+              reload();
+            }}
+          >
+            Presencia 08–20
+          </button>
+          <Link href="/preview/doctor/calendar" className="btn btn-primary">
+            Calendario master
+          </Link>
+          <Link href="/preview" className="btn btn-secondary">
+            Pedir turno (preview)
+          </Link>
+        </div>
       </div>
 
       <section className="space-y-3" aria-labelledby="affiliated-heading">
@@ -131,20 +162,20 @@ export function DoctorPanel({ clinics }: { clinics: EcuadorClinic[] }) {
           id="affiliated-heading"
           className="font-[family-name:var(--font-display)] text-xl font-semibold text-[color:var(--foreground)]"
         >
-          Clínicas afiliadas ({doctor.affiliations.length})
+          Clínicas afiliadas ({current.affiliations.length})
         </h2>
         <p className="text-sm text-[color:var(--foreground)]/70">
           Cada clínica tiene sus bloques de presencia. El anti-solape aplica
           entre todas: no podés estar en dos sedes a la vez.
         </p>
 
-        {doctor.affiliations.length === 0 ? (
+        {current.affiliations.length === 0 ? (
           <p className="text-sm text-[color:var(--foreground)]/60">
             Afiliá al menos una clínica abajo.
           </p>
         ) : (
           <ul className="space-y-4">
-            {doctor.affiliations.map((aff) => {
+            {current.affiliations.map((aff) => {
               const clinic = clinics.find((c) => c.id === aff.clinicId);
               return (
                 <li

@@ -100,25 +100,31 @@ update public.profiles set role = 'admin_waira' where id = '<user-id>';
 
 ## Deploy (Cloudflare Workers — review continuo)
 
+**Live preview:** [https://waira-mvpmedico.mariopulice21.workers.dev](https://waira-mvpmedico.mariopulice21.workers.dev)
+
+| Campo | Valor |
+| --- | --- |
+| Worker | `waira-mvpmedico` ([`wrangler.jsonc`](wrangler.jsonc)) |
+| Account ID | `7c582f80af4d212ed9dbf3e22ba591a8` |
+| URL | `https://waira-mvpmedico.mariopulice21.workers.dev` |
+
 Cada push a `main` o `feature/**` dispara [`.github/workflows/deploy-cloudflare.yml`](.github/workflows/deploy-cloudflare.yml).
 
 Secrets de GitHub requeridos:
 
 - `CLOUDFLARE_API_TOKEN` — token con permiso Workers Edit
-- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_ACCOUNT_ID` — `7c582f80af4d212ed9dbf3e22ba591a8`
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- `NEXT_PUBLIC_APP_URL` — URL pública del worker (ej. `https://waira-mvpmedico.<subdomain>.workers.dev`)
+- `NEXT_PUBLIC_APP_URL` — `https://waira-mvpmedico.mariopulice21.workers.dev`
 - `NEXT_PUBLIC_MALLANET_DONATION_URL` (opcional)
 
 Local (con Node ≥22 y token en el entorno):
 
 ```bash
 export CLOUDFLARE_API_TOKEN=...
-export CLOUDFLARE_ACCOUNT_ID=...
+export CLOUDFLARE_ACCOUNT_ID=7c582f80af4d212ed9dbf3e22ba591a8
 npm run cf:deploy
 ```
-
-Worker name: `waira-mvpmedico` ([`wrangler.jsonc`](wrangler.jsonc)).
 
 ## Deploy (Vercel + Supabase Cloud)
 
