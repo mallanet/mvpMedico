@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { AppointmentForm } from "@/components/appointment-form";
-import { CalendarWeek } from "@/components/calendar-week";
+import { CalendarIsland } from "@/components/calendar/calendar-island";
+import { Banner } from "@/components/ui/banner";
 import { getClinicContext, hasActiveMembership } from "@/lib/clinic-context";
 import { createClient } from "@/lib/supabase/server";
 import type { Appointment, ExternalEvent } from "@/lib/types";
@@ -80,14 +80,22 @@ export default async function CalendarPage() {
               : "bg-amber-100 text-amber-900"
           }`}
         >
-          Membresía {membershipActive ? "activa" : "pausada"}
+          Membresía {membershipActive ? "activa" : (ctx.membership?.status ?? "pausada")}
         </span>
       </div>
 
-      <AppointmentForm />
-      <CalendarWeek
+      {!membershipActive ? (
+        <Banner>
+          Tu membresía está pausada. Contactá al admin. Podés ver la agenda pero no
+          crear, mover ni cancelar turnos.
+        </Banner>
+      ) : null}
+
+      <CalendarIsland
+        resourceId={ctx.resource.id}
         appointments={normalizedAppointments}
         externalEvents={(externalEvents as ExternalEvent[]) ?? []}
+        membershipActive={membershipActive}
       />
     </div>
   );
