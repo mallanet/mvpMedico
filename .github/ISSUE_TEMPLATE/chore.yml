@@ -1,0 +1,26 @@
+name: Chore
+description: Docs, CI, tooling, tareas triviales
+title: "[chore] "
+labels: ["chore"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Qué hay que hacer
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Por qué
+    validations:
+      required: true
+  - type: dropdown
+    id: needs_spec
+    attributes:
+      label: ¿Requiere specs/NNN?
+      options:
+        - "No (chore trivial)"
+        - "Sí (toca producto o contrato base)"
+    validations:
+      required: true

@@ -13,3 +13,7 @@ blob-report/
 .vercel
 supabase/.branches
 supabase/.temp
+
+# Personal agent overlays — never required by the shared supply chain
+.cursor/skills/
+.specify/feature.json

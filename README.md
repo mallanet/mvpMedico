@@ -2,7 +2,27 @@
 
 Agenda centralizada para médicos: anti-solape, landing pública, asistente web de reserva e integración Google Calendar (busy → bloqueo).
 
-Producto / negocio: ver [`base.md`](./base.md).
+Producto / negocio: ver [`base.md`](./base.md).  
+Contrato de agentes (obligatorio): [`AGENTS.md`](./AGENTS.md).  
+Cómo colaborar (kleosr, christianmock, jseramn): [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
+## Equipo y colaboración AI-first
+
+| Persona | Rol |
+| --- | --- |
+| kleosr | Fuente de código (Cursor propio) |
+| christianmock | Fuente de código (Cursor propio) |
+| jseramn | Fuente de código (Cursor propio) |
+
+Cada uno usa sus skills y workflows. La **base del repo** (`AGENTS.md` + rule Cursor) es obligatoria; los aditivos personales no deben romper la neutralidad ni la cadena de suministro a 3.
+
+```text
+AGENTS.md               Contrato base para todos los agentes
+CONTRIBUTING.md         Playbook humano
+.specify/               Constitution + plantillas de spec/plan/tasks
+specs/                  Un directorio por feature (NNN-short-name)
+.cursor/rules/          Puente mínimo Cursor → AGENTS.md
+```
 
 ## Stack
 
@@ -112,7 +132,10 @@ Checklist mínimo (base.md §9):
 ```text
 /
 ├── base.md
+├── AGENTS.md
+├── CONTRIBUTING.md
 ├── README.md
+├── specs/
 ├── e2e/
 ├── supabase/migrations/
 └── src/
@@ -125,3 +148,4 @@ Checklist mínimo (base.md §9):
 
 - Docs en español; código/commits en inglés
 - Ramas `feature/`, `fix/`, `chore/` + PRs chicos
+- Ver `AGENTS.md` para la ley de agentes y la cadena de suministro a 3

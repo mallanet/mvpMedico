@@ -214,10 +214,12 @@ Reabrir solo si choca con implementación, legal o pagos.
 
 ## 11. Cómo trabajar
 
-1. Leer este documento
+Contrato de agentes y playbook del trio: [`AGENTS.md`](AGENTS.md) + [`CONTRIBUTING.md`](CONTRIBUTING.md). Prompt en lenguaje natural; la base del repo es obligatoria; aditivos personales OK si no rompen la neutralidad.
+
+1. Leer este documento y `AGENTS.md`
 2. Pedir acceso a Supabase / Vercel / pagos cuando existan
-3. Rama desde `main`
-4. PR aunque sea solo docs
+3. Claim Issue → rama `feature/NNN-short-name` + `specs/NNN-…` → PR
+4. PR aunque sea solo docs; 1 approve de otro del trio
 
 Cambio de producto: editar la sección (y el glosario si cambia un término). Si reabrís una fila de §10, en el PR: `Propuesta: …` y 3–5 líneas de trade-off. Actualizar la fecha arriba al mergear.
 

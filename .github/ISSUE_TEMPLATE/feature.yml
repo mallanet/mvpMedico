@@ -1,0 +1,40 @@
+name: Feature
+description: Trabajo de producto con owner y specs/NNN
+title: "[feature] "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema
+      description: Qué duele y para quién.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: Qué queda verdadero cuando esté mergeado.
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Fuera de alcance
+      description: Qué no entra (recordar base.md §7).
+      value: |
+        - 
+    validations:
+      required: false
+  - type: input
+    id: owner
+    attributes:
+      label: Owner propuesto
+      description: GitHub username (kleosr | christianmock | jseramn)
+      placeholder: jseramn
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        Tras crear el issue, **asignate** como assignee. Un owner = un `specs/NNN-short-name` = una rama. Ver [CONTRIBUTING.md](../../CONTRIBUTING.md).
