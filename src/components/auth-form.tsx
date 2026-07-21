@@ -48,7 +48,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
       }
     }
 
-    router.push("/calendar");
+    // DECISION: signup lands on onboarding; login goes to calendar.
+    router.push(mode === "signup" ? "/onboarding" : "/calendar");
     router.refresh();
   }
 

@@ -1,16 +1,24 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { PostgrestError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getClinicContext, hasActiveMembership } from "@/lib/clinic-context";
+import {
+  buildDaySlots,
+  filterAvailableSlots,
+} from "@/lib/slots";
+import { OVERLAP_MESSAGE, type MembershipStatus, type TimeSlot } from "@/lib/types";
 
 export type ActionResult = { ok: true; id?: string } | { ok: false; error: string };
 
-function overlapError(message: string): boolean {
+function isExclusionViolation(error: PostgrestError): boolean {
+  // DECISION: check Postgres code 23P01 first; fall back to message for PostgREST variants.
   return (
-    message.includes("appointments_no_overlap") ||
-    message.includes("exclusion constraint") ||
-    message.toLowerCase().includes("overlap")
+    error.code === "23P01" ||
+    error.message.includes("appointments_no_overlap") ||
+    error.message.includes("exclusion constraint") ||
+    error.message.toLowerCase().includes("overlap")
   );
 }
 
@@ -35,6 +43,13 @@ async function assertNoExternalBusy(
   return null;
 }
 
+function membershipBlocked(): ActionResult {
+  return {
+    ok: false,
+    error: "Tu membresía está pausada. Contactá al admin.",
+  };
+}
+
 export async function createAppointment(input: {
   startsAt: string;
   endsAt: string;
@@ -45,6 +60,7 @@ export async function createAppointment(input: {
 }): Promise<ActionResult> {
   const ctx = await getClinicContext();
   if (!ctx?.resource.id) return { ok: false, error: "Sesión no válida." };
+  if (!hasActiveMembership(ctx)) return membershipBlocked();
 
   const busy = await assertNoExternalBusy(
     ctx.resource.id,
@@ -82,11 +98,8 @@ export async function createAppointment(input: {
     .single();
 
   if (error) {
-    if (overlapError(error.message)) {
-      return {
-        ok: false,
-        error: "Solape detectado: ya hay un turno activo en ese horario.",
-      };
+    if (isExclusionViolation(error)) {
+      return { ok: false, error: OVERLAP_MESSAGE };
     }
     return { ok: false, error: error.message };
   }
@@ -99,6 +112,7 @@ export async function createAppointment(input: {
 export async function cancelAppointment(appointmentId: string): Promise<ActionResult> {
   const ctx = await getClinicContext();
   if (!ctx?.resource.id) return { ok: false, error: "Sesión no válida." };
+  if (!hasActiveMembership(ctx)) return membershipBlocked();
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -109,16 +123,18 @@ export async function cancelAppointment(appointmentId: string): Promise<ActionRe
 
   if (error) return { ok: false, error: error.message };
   revalidatePath("/calendar");
+  revalidatePath("/conflicts");
   return { ok: true };
 }
 
-export async function rescheduleAppointment(input: {
+export async function moveAppointment(input: {
   appointmentId: string;
   startsAt: string;
   endsAt: string;
 }): Promise<ActionResult> {
   const ctx = await getClinicContext();
   if (!ctx?.resource.id) return { ok: false, error: "Sesión no válida." };
+  if (!hasActiveMembership(ctx)) return membershipBlocked();
 
   const busy = await assertNoExternalBusy(
     ctx.resource.id,
@@ -139,17 +155,24 @@ export async function rescheduleAppointment(input: {
     .eq("resource_id", ctx.resource.id);
 
   if (error) {
-    if (overlapError(error.message)) {
-      return {
-        ok: false,
-        error: "Solape detectado: ya hay un turno activo en ese horario.",
-      };
+    if (isExclusionViolation(error)) {
+      return { ok: false, error: OVERLAP_MESSAGE };
     }
     return { ok: false, error: error.message };
   }
 
   revalidatePath("/calendar");
+  revalidatePath("/conflicts");
   return { ok: true };
+}
+
+/** @deprecated alias kept for older call sites */
+export async function rescheduleAppointment(input: {
+  appointmentId: string;
+  startsAt: string;
+  endsAt: string;
+}): Promise<ActionResult> {
+  return moveAppointment(input);
 }
 
 export async function bookFromLanding(input: {
@@ -161,6 +184,7 @@ export async function bookFromLanding(input: {
   patientEmail?: string;
   notes?: string;
 }): Promise<ActionResult> {
+  // DECISION: block booking when membership inactive to enforce paid model
   const supabase = await createClient();
 
   const { data: landing, error: landingError } = await supabase
@@ -226,16 +250,58 @@ export async function bookFromLanding(input: {
     .single();
 
   if (error) {
-    if (overlapError(error.message)) {
-      return {
-        ok: false,
-        error: "Ese horario ya no está disponible.",
-      };
+    if (isExclusionViolation(error)) {
+      return { ok: false, error: OVERLAP_MESSAGE };
     }
     return { ok: false, error: error.message };
   }
 
   return { ok: true, id: data.id };
+}
+
+export async function listAvailableSlots(input: {
+  slug: string;
+  date: string;
+}): Promise<{ ok: true; slots: TimeSlot[] } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const { data: landing } = await supabase
+    .from("landings")
+    .select("resource_id, is_published")
+    .eq("slug", input.slug)
+    .eq("is_published", true)
+    .maybeSingle();
+
+  if (!landing) return { ok: false, error: "Landing no disponible." };
+
+  const day = new Date(`${input.date}T12:00:00`);
+  const slots = buildDaySlots(day);
+  if (slots.length === 0) return { ok: true, slots: [] };
+
+  const dayStart = slots[0].startsAt;
+  const dayEnd = slots[slots.length - 1].endsAt;
+
+  const [{ data: appointments }, { data: externalEvents }] = await Promise.all([
+    supabase
+      .from("appointments")
+      .select("starts_at, ends_at")
+      .eq("resource_id", landing.resource_id)
+      .neq("status", "cancelled")
+      .lt("starts_at", dayEnd)
+      .gt("ends_at", dayStart),
+    supabase
+      .from("external_events")
+      .select("starts_at, ends_at")
+      .eq("resource_id", landing.resource_id)
+      .lt("starts_at", dayEnd)
+      .gt("ends_at", dayStart),
+  ]);
+
+  const busy = [
+    ...(appointments ?? []),
+    ...(externalEvents ?? []),
+  ];
+
+  return { ok: true, slots: filterAvailableSlots(slots, busy) };
 }
 
 export async function updateOnboarding(input: {
@@ -313,7 +379,7 @@ export async function updateOnboarding(input: {
 
 export async function setMembershipStatus(
   clinicId: string,
-  status: "active" | "paused",
+  status: MembershipStatus,
 ): Promise<ActionResult> {
   const ctx = await getClinicContext();
   if (!ctx || ctx.profile.role !== "admin_waira") {
@@ -331,5 +397,36 @@ export async function setMembershipStatus(
 
   if (error) return { ok: false, error: error.message };
   revalidatePath("/admin/memberships");
+  return { ok: true };
+}
+
+export async function disconnectGoogle(): Promise<ActionResult> {
+  const ctx = await getClinicContext();
+  if (!ctx?.profile.id) return { ok: false, error: "Sesión no válida." };
+
+  const supabase = await createClient();
+  const { data: connection } = await supabase
+    .from("external_connections")
+    .select("id")
+    .eq("profile_id", ctx.profile.id)
+    .eq("provider", "google")
+    .maybeSingle();
+
+  if (!connection) return { ok: true };
+
+  await supabase
+    .from("external_events")
+    .delete()
+    .eq("connection_id", connection.id);
+
+  const { error } = await supabase
+    .from("external_connections")
+    .delete()
+    .eq("id", connection.id);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/settings/google");
+  revalidatePath("/conflicts");
+  revalidatePath("/calendar");
   return { ok: true };
 }

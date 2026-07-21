@@ -165,6 +165,7 @@ export async function syncGoogleBusyForCurrentUser(): Promise<{
     starts_at: slot.start,
     ends_at: slot.end,
     summary: "Google Calendar (ocupado)",
+    source: "google_freebusy",
   }));
 
   const { error } = await service.from("external_events").insert(rows);
