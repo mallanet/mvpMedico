@@ -37,10 +37,3 @@ export function requireEnv(name: string): string {
   }
   return value;
 }
-
-export function getGoogleRedirectUri(): string {
-  return (
-    process.env.GOOGLE_REDIRECT_URI?.replace(/\/$/, "") ??
-    `${getPublicAppUrl()}/api/google/callback`
-  );
-}

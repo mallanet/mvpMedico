@@ -38,8 +38,5 @@ test.describe("landing booking", () => {
     await expect(
       page.getByRole("status", { name: /confirmación de turno/i }),
     ).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: /agregar a google calendar/i }),
-    ).toBeVisible();
   });
 });

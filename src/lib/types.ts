@@ -54,14 +54,6 @@ export type Appointment = {
   patients_min?: PatientMin | null;
 };
 
-export type ExternalEvent = {
-  id: string;
-  resource_id: string;
-  starts_at: string;
-  ends_at: string;
-  summary: string | null;
-};
-
 export type Membership = {
   id: string;
   clinic_id: string;
@@ -85,4 +77,4 @@ export type TimeSlot = {
 
 /** Canonical overlap rejection copy for UI + E2E. */
 export const OVERLAP_MESSAGE =
-  "Horario no disponible. Elegí otro turno." as const;
+  "Ese horario ya está tomado. Elegí otro." as const;

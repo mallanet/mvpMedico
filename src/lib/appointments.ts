@@ -22,31 +22,10 @@ function isExclusionViolation(error: PostgrestError): boolean {
   );
 }
 
-async function assertNoExternalBusy(
-  resourceId: string,
-  startsAt: string,
-  endsAt: string,
-): Promise<string | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("external_events")
-    .select("id, summary, starts_at, ends_at")
-    .eq("resource_id", resourceId)
-    .lt("starts_at", endsAt)
-    .gt("ends_at", startsAt)
-    .limit(1);
-
-  if (error) return error.message;
-  if (data && data.length > 0) {
-    return "El horario está bloqueado por un evento externo (Google Calendar).";
-  }
-  return null;
-}
-
 function membershipBlocked(): ActionResult {
   return {
     ok: false,
-    error: "Tu membresía está pausada. Contactá al admin.",
+    error: "Tu membresía está pausada. Pedile al admin que la reactive.",
   };
 }
 
@@ -62,13 +41,6 @@ export async function createAppointment(input: {
   if (!ctx?.resource.id) return { ok: false, error: "Sesión no válida." };
   if (!hasActiveMembership(ctx)) return membershipBlocked();
 
-  const busy = await assertNoExternalBusy(
-    ctx.resource.id,
-    input.startsAt,
-    input.endsAt,
-  );
-  if (busy) return { ok: false, error: busy };
-
   const supabase = await createClient();
   const { data: patient, error: patientError } = await supabase
     .from("patients_min")
@@ -81,7 +53,7 @@ export async function createAppointment(input: {
     .single();
 
   if (patientError || !patient) {
-    return { ok: false, error: patientError?.message ?? "No se pudo crear paciente." };
+    return { ok: false, error: patientError?.message ?? "No pudimos crear el paciente." };
   }
 
   const { data, error } = await supabase
@@ -105,7 +77,6 @@ export async function createAppointment(input: {
   }
 
   revalidatePath("/calendar");
-  revalidatePath("/conflicts");
   return { ok: true, id: data.id };
 }
 
@@ -123,7 +94,6 @@ export async function cancelAppointment(appointmentId: string): Promise<ActionRe
 
   if (error) return { ok: false, error: error.message };
   revalidatePath("/calendar");
-  revalidatePath("/conflicts");
   return { ok: true };
 }
 
@@ -135,13 +105,6 @@ export async function moveAppointment(input: {
   const ctx = await getClinicContext();
   if (!ctx?.resource.id) return { ok: false, error: "Sesión no válida." };
   if (!hasActiveMembership(ctx)) return membershipBlocked();
-
-  const busy = await assertNoExternalBusy(
-    ctx.resource.id,
-    input.startsAt,
-    input.endsAt,
-  );
-  if (busy) return { ok: false, error: busy };
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -162,7 +125,6 @@ export async function moveAppointment(input: {
   }
 
   revalidatePath("/calendar");
-  revalidatePath("/conflicts");
   return { ok: true };
 }
 
@@ -194,7 +156,7 @@ export async function bookFromLanding(input: {
     .maybeSingle();
 
   if (landingError || !landing?.is_published) {
-    return { ok: false, error: "Landing no disponible." };
+    return { ok: false, error: "Esa landing no está disponible." };
   }
 
   const { data: resource } = await supabase
@@ -203,7 +165,7 @@ export async function bookFromLanding(input: {
     .eq("id", landing.resource_id)
     .single();
 
-  if (!resource) return { ok: false, error: "Recurso no encontrado." };
+  if (!resource) return { ok: false, error: "No encontramos ese consultorio." };
 
   const { data: membership } = await supabase
     .from("memberships")
@@ -214,13 +176,6 @@ export async function bookFromLanding(input: {
   if (membership?.status !== "active") {
     return { ok: false, error: "La membresía Waira no está activa." };
   }
-
-  const busy = await assertNoExternalBusy(
-    resource.id,
-    input.startsAt,
-    input.endsAt,
-  );
-  if (busy) return { ok: false, error: busy };
 
   const { data: patient, error: patientError } = await supabase
     .from("patients_min")
@@ -233,7 +188,7 @@ export async function bookFromLanding(input: {
     .single();
 
   if (patientError || !patient) {
-    return { ok: false, error: patientError?.message ?? "No se pudo crear paciente." };
+    return { ok: false, error: patientError?.message ?? "No pudimos crear el paciente." };
   }
 
   const { data, error } = await supabase
@@ -271,7 +226,7 @@ export async function listAvailableSlots(input: {
     .eq("is_published", true)
     .maybeSingle();
 
-  if (!landing) return { ok: false, error: "Landing no disponible." };
+  if (!landing) return { ok: false, error: "Esa landing no está disponible." };
 
   const day = new Date(`${input.date}T12:00:00`);
   const slots = buildDaySlots(day);
@@ -280,7 +235,7 @@ export async function listAvailableSlots(input: {
   const dayStart = slots[0].startsAt;
   const dayEnd = slots[slots.length - 1].endsAt;
 
-  const [{ data: appointments }, { data: externalEvents }] = await Promise.all([
+  const [{ data: appointments }] = await Promise.all([
     supabase
       .from("appointments")
       .select("starts_at, ends_at")
@@ -288,18 +243,9 @@ export async function listAvailableSlots(input: {
       .neq("status", "cancelled")
       .lt("starts_at", dayEnd)
       .gt("ends_at", dayStart),
-    supabase
-      .from("external_events")
-      .select("starts_at, ends_at")
-      .eq("resource_id", landing.resource_id)
-      .lt("starts_at", dayEnd)
-      .gt("ends_at", dayStart),
   ]);
 
-  const busy = [
-    ...(appointments ?? []),
-    ...(externalEvents ?? []),
-  ];
+  const busy = appointments ?? [];
 
   return { ok: true, slots: filterAvailableSlots(slots, busy) };
 }
@@ -324,7 +270,7 @@ export async function updateOnboarding(input: {
   if ((input.publishLanding || input.publishMallanet) && !hasActiveMembership(ctx)) {
     return {
       ok: false,
-      error: "Necesitás membresía Waira activa para publicar landing o Mallanet.",
+      error: "Para publicar la landing o Mallanet necesitás membresía Waira activa.",
     };
   }
 
@@ -397,36 +343,5 @@ export async function setMembershipStatus(
 
   if (error) return { ok: false, error: error.message };
   revalidatePath("/admin/memberships");
-  return { ok: true };
-}
-
-export async function disconnectGoogle(): Promise<ActionResult> {
-  const ctx = await getClinicContext();
-  if (!ctx?.profile.id) return { ok: false, error: "Sesión no válida." };
-
-  const supabase = await createClient();
-  const { data: connection } = await supabase
-    .from("external_connections")
-    .select("id")
-    .eq("profile_id", ctx.profile.id)
-    .eq("provider", "google")
-    .maybeSingle();
-
-  if (!connection) return { ok: true };
-
-  await supabase
-    .from("external_events")
-    .delete()
-    .eq("connection_id", connection.id);
-
-  const { error } = await supabase
-    .from("external_connections")
-    .delete()
-    .eq("id", connection.id);
-
-  if (error) return { ok: false, error: error.message };
-  revalidatePath("/settings/google");
-  revalidatePath("/conflicts");
-  revalidatePath("/calendar");
   return { ok: true };
 }

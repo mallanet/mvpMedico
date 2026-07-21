@@ -148,7 +148,7 @@ export function AppointmentDialog({
             <button
               type="submit"
               disabled={pending}
-              className="rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white hover:bg-teal-900 disabled:opacity-60"
+              className="btn btn-primary"
             >
               {pending
                 ? "Guardando…"

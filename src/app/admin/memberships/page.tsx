@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/page-header";
 import { setMembershipStatus } from "@/lib/appointments";
 import { getClinicContext } from "@/lib/clinic-context";
 import { createClient } from "@/lib/supabase/server";
@@ -17,56 +18,65 @@ export default async function AdminMembershipsPage() {
   const ctx = await getClinicContext();
   if (!ctx || ctx.profile.role !== "admin_waira") {
     return (
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold text-teal-950">Membresías</h1>
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-          Solo el rol <code>admin_waira</code> puede activar membresías. Para
-          desarrollo local:
+      <div className="max-w-2xl space-y-6">
+        <PageHeader title="Membresías" />
+        <p className="rounded-[var(--radius-panel)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
+          Solo el rol <code className="font-medium">admin_waira</code> puede
+          activar membresías. Para desarrollo local:
         </p>
-        <pre className="overflow-x-auto rounded-lg bg-teal-950 p-3 text-xs text-teal-50">
+        <pre className="overflow-x-auto rounded-[var(--radius-panel)] bg-teal-950 p-4 text-xs leading-relaxed text-teal-50">
 {`update public.profiles set role = 'admin_waira' where id = '<tu-user-id>';
 -- o usá admin@example.com / password123 del seed`}
         </pre>
         {ctx?.membership ? (
-          <p className="text-sm text-teal-900/70">
+          <p className="text-sm leading-relaxed text-teal-900/70">
             Tu clínica actual: membresía{" "}
-            <strong>{ctx.membership.status}</strong> (clinic_id{" "}
-            <code>{ctx.clinicId}</code>).
+            <strong className="font-medium text-teal-950">
+              {ctx.membership.status}
+            </strong>{" "}
+            (clinic_id <code>{ctx.clinicId}</code>).
           </p>
         ) : null}
       </div>
     );
   }
 
+  type Row = {
+    id: string;
+    clinic_id: string;
+    status: string;
+    activated_at: string | null;
+    clinics: { name?: string } | null;
+  };
+
   const supabase = await createClient();
-  const { data: rows } = await supabase
+  const { data } = await supabase
     .from("memberships")
     .select("id, clinic_id, status, activated_at, clinics(name)")
     .order("created_at", { ascending: false });
+  const rows = (data as Row[]) ?? [];
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-teal-950">Membresías Waira</h1>
-        <p className="text-sm text-teal-900/70">
-          Activá, pausá o cancelá clínicas. Stripe queda para una fase posterior.
-        </p>
-      </div>
-      <div className="overflow-x-auto rounded-xl border border-teal-900/10 bg-white">
-        <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-teal-900/10 bg-teal-50/50 text-xs uppercase tracking-wide text-teal-900/60">
+    <div className="space-y-6">
+      <PageHeader
+        title="Membresías Waira"
+        description="Activá, pausá o cancelá clínicas. Stripe queda para una fase posterior."
+      />
+      <div className="overflow-x-auto rounded-[var(--radius-panel)] border border-teal-900/10 bg-white/80 shadow-sm">
+        <table className="min-w-full border-collapse text-left text-sm text-teal-900/80">
+          <thead className="border-b border-teal-900/10 bg-teal-50/50 text-xs text-teal-900/60">
             <tr>
-              <th className="px-4 py-3">Clínica</th>
-              <th className="px-4 py-3">Estado</th>
-              <th className="px-4 py-3">Activada</th>
-              <th className="px-4 py-3">Acciones</th>
+              <th className="px-4 py-3 font-medium">Clínica</th>
+              <th className="px-4 py-3 font-medium">Estado</th>
+              <th className="px-4 py-3 font-medium">Activada</th>
+              <th className="px-4 py-3 font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-teal-900/10">
-            {(rows ?? []).map((row) => (
+            {rows.map((row) => (
               <tr key={row.id}>
                 <td className="px-4 py-3 font-medium text-teal-950">
-                  {(row.clinics as { name?: string } | null)?.name ?? "Clínica"}
+                  {row.clinics?.name ?? "Clínica"}
                 </td>
                 <td className="px-4 py-3">{row.status}</td>
                 <td className="px-4 py-3 text-teal-900/70">
@@ -81,7 +91,7 @@ export default async function AdminMembershipsPage() {
                       <button
                         name="status"
                         value="active"
-                        className="rounded-md bg-teal-800 px-3 py-1.5 text-white"
+                        className="btn btn-primary"
                       >
                         Activar
                       </button>
@@ -90,7 +100,7 @@ export default async function AdminMembershipsPage() {
                       <button
                         name="status"
                         value="paused"
-                        className="rounded-md border px-3 py-1.5"
+                        className="btn btn-secondary"
                       >
                         Pausar
                       </button>
@@ -99,7 +109,7 @@ export default async function AdminMembershipsPage() {
                       <button
                         name="status"
                         value="cancelled"
-                        className="rounded-md border border-red-200 px-3 py-1.5 text-red-700"
+                        className="btn border border-red-200 bg-white text-red-700 hover:bg-red-50"
                       >
                         Cancelar
                       </button>

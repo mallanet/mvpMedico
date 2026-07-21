@@ -20,16 +20,37 @@ import {
   DAY_START_HOUR,
   SLOT_MINUTES,
 } from "@/lib/slots";
-import type { Appointment, ExternalEvent } from "@/lib/types";
+import type { Appointment } from "@/lib/types";
 import { AppointmentDialog } from "@/components/calendar/appointment-dialog";
 import { useAppointmentsRealtime } from "@/components/calendar/realtime-subscriber";
+
+type ActionResult = { ok: true; id?: string } | { ok: false; error: string };
+
+export type CalendarMutations = {
+  create: (input: {
+    startsAt: string;
+    endsAt: string;
+    patientName: string;
+    patientPhone: string;
+    notes?: string;
+  }) => Promise<ActionResult>;
+  move: (input: {
+    appointmentId: string;
+    startsAt: string;
+    endsAt: string;
+  }) => Promise<ActionResult>;
+  cancel: (appointmentId: string) => Promise<ActionResult>;
+};
 
 type Props = {
   resourceId: string;
   appointments: Appointment[];
-  externalEvents: ExternalEvent[];
   membershipActive: boolean;
   weekStartIso?: string;
+  /** When set, skips Supabase realtime and uses these instead of server actions. */
+  mutations?: CalendarMutations;
+  enableRealtime?: boolean;
+  onMutated?: () => void;
 };
 
 type DialogMode =
@@ -54,8 +75,10 @@ function overlaps(
 export function CalendarGrid({
   resourceId,
   appointments,
-  externalEvents,
   membershipActive,
+  mutations,
+  enableRealtime = true,
+  onMutated,
 }: Props) {
   const router = useRouter();
   const [dialog, setDialog] = useState<DialogMode>(null);
@@ -64,10 +87,17 @@ export function CalendarGrid({
   const [weekOffset, setWeekOffset] = useState(0);
 
   const refresh = useCallback(() => {
+    if (onMutated) {
+      onMutated();
+      return;
+    }
     router.refresh();
-  }, [router]);
+  }, [router, onMutated]);
 
-  useAppointmentsRealtime(resourceId, refresh);
+  useAppointmentsRealtime(
+    enableRealtime && !mutations ? resourceId : "",
+    refresh,
+  );
 
   const weekStart = useMemo(() => {
     const base = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -105,13 +135,16 @@ export function CalendarGrid({
   }) {
     if (!dialog || dialog.type !== "create") return;
     startTransition(async () => {
-      const result = await createAppointment({
+      const payload = {
         startsAt: dialog.startsAt,
         endsAt: dialog.endsAt,
         patientName: input.patientName,
         patientPhone: input.patientPhone,
         notes: input.notes,
-      });
+      };
+      const result = mutations
+        ? await mutations.create(payload)
+        : await createAppointment(payload);
       if (!result.ok) {
         setError(result.error);
         return;
@@ -124,11 +157,14 @@ export function CalendarGrid({
   function onSubmitMove(input: { startsAt: string; endsAt: string }) {
     if (!dialog || dialog.type !== "edit") return;
     startTransition(async () => {
-      const result = await moveAppointment({
+      const payload = {
         appointmentId: dialog.appointment.id,
         startsAt: input.startsAt,
         endsAt: input.endsAt,
-      });
+      };
+      const result = mutations
+        ? await mutations.move(payload)
+        : await moveAppointment(payload);
       if (!result.ok) {
         setError(result.error);
         return;
@@ -140,7 +176,9 @@ export function CalendarGrid({
 
   function onCancel(id: string) {
     startTransition(async () => {
-      const result = await cancelAppointment(id);
+      const result = mutations
+        ? await mutations.cancel(id)
+        : await cancelAppointment(id);
       if (!result.ok) {
         setError(result.error);
         return;
@@ -151,18 +189,16 @@ export function CalendarGrid({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="cal space-y-4">
       {!membershipActive ? (
-        <p
-          className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
-          role="status"
-        >
-          Tu membresía está pausada. Contactá al admin. La agenda es solo lectura.
+        <p className="cal-banner cal-banner--paused" role="status">
+          Tu membresía está pausada. La agenda es solo lectura; pedile al admin
+          que la reactive.
         </p>
       ) : null}
 
       {error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+        <p className="cal-banner cal-banner--error" role="alert">
           {error}
         </p>
       ) : null}
@@ -172,49 +208,46 @@ export function CalendarGrid({
           <button
             type="button"
             onClick={() => setWeekOffset((w) => w - 1)}
-            className="rounded-md border border-teal-900/15 px-3 py-1.5 text-sm hover:bg-teal-50"
+            className="cal-nav-btn"
           >
             ← Semana
           </button>
           <button
             type="button"
             onClick={() => setWeekOffset(0)}
-            className="rounded-md border border-teal-900/15 px-3 py-1.5 text-sm hover:bg-teal-50"
+            className="cal-nav-btn"
           >
             Hoy
           </button>
           <button
             type="button"
             onClick={() => setWeekOffset((w) => w + 1)}
-            className="rounded-md border border-teal-900/15 px-3 py-1.5 text-sm hover:bg-teal-50"
+            className="cal-nav-btn"
           >
             Semana →
           </button>
         </div>
-        <p className="text-sm text-teal-900/70">
+        <p className="cal-range">
           {format(weekStart, "d MMM", { locale: es })} –{" "}
           {format(addDays(weekStart, 5), "d MMM yyyy", { locale: es })}
         </p>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-teal-900/10 bg-white">
+      <div className="cal-board">
         <div
           className="grid min-w-[720px]"
           style={{ gridTemplateColumns: "56px repeat(6, minmax(0, 1fr))" }}
         >
-          <div className="border-b border-teal-900/10 bg-teal-50/40 p-2" />
+          <div className="cal-head" />
           {days.map((day) => (
-            <div
-              key={day.toISOString()}
-              className="border-b border-l border-teal-900/10 bg-teal-50/40 p-2 text-center text-xs font-medium uppercase tracking-wide text-teal-900/70"
-            >
+            <div key={day.toISOString()} className="cal-head cal-head--day">
               {format(day, "EEE d", { locale: es })}
             </div>
           ))}
 
           {HOURS.map((minuteOfDay) => (
             <div key={minuteOfDay} className="contents">
-              <div className="border-b border-teal-900/5 px-1 py-0.5 text-right text-[10px] text-teal-900/50">
+              <div className="cal-time">
                 {String(Math.floor(minuteOfDay / 60)).padStart(2, "0")}:
                 {String(minuteOfDay % 60).padStart(2, "0")}
               </div>
@@ -223,9 +256,6 @@ export function CalendarGrid({
                 const endsAt = addMinutes(parseISO(startsAt), SLOT_MINUTES).toISOString();
                 const appt = active.find((a) =>
                   overlaps(a.starts_at, a.ends_at, startsAt, endsAt),
-                );
-                const blocked = externalEvents.some((e) =>
-                  overlaps(e.starts_at, e.ends_at, startsAt, endsAt),
                 );
                 const isApptStart =
                   appt &&
@@ -241,36 +271,30 @@ export function CalendarGrid({
                         setDialog({ type: "edit", appointment: appt });
                         return;
                       }
-                      if (!appt && !blocked) onCreateSlot(day, minuteOfDay);
+                      if (!appt) onCreateSlot(day, minuteOfDay);
                     }}
-                    className={`relative h-7 border-b border-l border-teal-900/5 text-left transition ${
-                      blocked
-                        ? "bg-amber-50/80"
-                        : appt
-                          ? isApptStart
-                            ? "bg-teal-700 text-white hover:bg-teal-800"
-                            : "bg-teal-700/40"
-                          : membershipActive
-                            ? "hover:bg-teal-50"
-                            : "cursor-not-allowed opacity-60"
-                    }`}
+                    className={[
+                      "cal-slot",
+                      appt && isApptStart ? "cal-slot--appt" : "",
+                      appt && !isApptStart ? "cal-slot--appt-cont" : "",
+                      !appt && membershipActive ? "cal-slot--free" : "",
+                      !appt && !membershipActive ? "cal-slot--locked" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                     aria-label={
-                      blocked
-                        ? "Bloqueo externo"
-                        : appt
-                          ? appt.patients_min?.full_name ?? "Turno"
-                          : "Crear turno"
+                      appt
+                        ? appt.patients_min?.full_name ?? "Turno"
+                        : "Crear turno"
                     }
                     title={
-                      blocked
-                        ? "Bloqueo externo"
-                        : appt
-                          ? appt.patients_min?.full_name ?? "Turno"
-                          : "Crear turno"
+                      appt
+                        ? appt.patients_min?.full_name ?? "Turno"
+                        : "Crear turno"
                     }
                   >
                     {isApptStart && appt ? (
-                      <span className="block truncate px-1 text-[10px] leading-7">
+                      <span className="cal-slot__label">
                         {appt.patients_min?.full_name ?? "Turno"}
                       </span>
                     ) : null}

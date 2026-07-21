@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-labelledby="t">
+  <title id="t">Anti-solape</title>
+  <rect x="10" y="16" width="28" height="12" rx="3" fill="#25cec9"/>
+  <rect x="26" y="36" width="28" height="12" rx="3" fill="#105151"/>
+  <path d="M38 22h8M18 42H10" stroke="#105151" stroke-width="2" stroke-linecap="round" opacity=".35"/>
+  <path d="M44 24l6 6-6 6" stroke="#105151" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

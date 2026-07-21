@@ -1,35 +1,450 @@
+/* Hallmark · genre: modern-minimal · macrostructure: Split Studio · H2 knobs: split=6/4, zigzag=on
+ * tone: technical-approachable · theme: Waira (DESIGN.md) · type: Elms Sans · enrichment: brand icons
+ * nav: AppNav (preserved) · footer: Ft2 (layout) · audit: taste-skill-v1 (motion deferred to DESIGN M3)
+ * Hallmark · pre-emit critique: P4 H5 E4 S5 R5 V4
+ */
+@import url("https://fonts.googleapis.com/css2?family=Elms+Sans:wght@100..900&display=swap");
+@import "../../tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #f3f7f6;
-  --foreground: #0f2926;
-  --accent: #0f5c56;
+html,
+body {
+  overflow-x: clip;
 }
 
 body {
   color: var(--foreground);
   background:
-    radial-gradient(circle at top left, rgba(15, 92, 86, 0.08), transparent 40%),
+    radial-gradient(circle at top left, rgba(16, 81, 81, 0.08), transparent 40%),
     radial-gradient(circle at bottom right, rgba(120, 90, 40, 0.06), transparent 35%),
     var(--background);
-  font-family: var(--font-source-serif), Georgia, serif;
+  font-family: var(--font-elms-sans);
 }
 
-input,
-textarea,
-button,
-select {
-  font-family: var(--font-dm-sans), system-ui, sans-serif;
+@layer components {
+  .skip-link {
+    position: absolute;
+    left: var(--space-4);
+    top: 0;
+    z-index: 50;
+    transform: translateY(-120%);
+    border-radius: var(--radius-control);
+    background: var(--brand-forest);
+    padding: 10px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #fff;
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+
+  .skip-link:focus {
+    transform: translateY(var(--space-3));
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .btn {
+    display: inline-flex;
+    min-height: var(--control-h);
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-control);
+    padding: 0 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition:
+      background-color var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      opacity var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
+  }
+
+  .btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .btn-primary {
+    background: var(--brand-forest);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: #0c3f3f;
+  }
+
+  .btn-secondary {
+    border: 1px solid rgba(16, 81, 81, 0.28);
+    background: #fff;
+    color: var(--foreground);
+  }
+
+  .btn-secondary:hover {
+    background: #e8f4f3;
+  }
+
+  .btn-dark {
+    background: #1c1917;
+    color: #fff;
+  }
+
+  .btn-dark:hover {
+    background: #292524;
+  }
+
+  .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .field {
+    min-height: var(--control-h);
+    border-radius: var(--radius-control);
+    border: 1px solid #d6d3d1;
+    background: #fff;
+    padding: 10px 12px;
+    font-size: 0.875rem;
+  }
+
+  .nav-link {
+    display: inline-flex;
+    min-height: var(--control-h);
+    align-items: center;
+    border-radius: var(--radius-control);
+    padding: 0 12px;
+    font-size: 0.875rem;
+  }
 }
 
-a,
-p,
-label,
-li,
-h1,
-h2,
-h3 {
-  font-family: var(--font-dm-sans), system-ui, sans-serif;
+/* Unlayered so focus beats Tailwind preflight */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+.btn:focus-visible,
+.nav-link:focus-visible,
+.field:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(16, 81, 81, 0.22);
+}
+
+/* Hallmark · calendar agenda — Forest/Foam/Mist, no competing teal/amber chrome */
+.cal-banner {
+  border-radius: var(--radius-control);
+  padding: var(--space-3) var(--space-4);
+  font-size: 0.875rem;
+}
+.cal-banner--paused {
+  border: 1px solid rgba(15, 41, 38, 0.12);
+  background: var(--brand-foam);
+  color: var(--foreground);
+}
+.cal-banner--error {
+  border: 1px solid rgba(180, 40, 40, 0.25);
+  background: #fef2f2;
+  color: #7f1d1d;
+}
+.cal-nav-btn {
+  min-height: 36px;
+  border-radius: var(--radius-control);
+  border: 1px solid rgba(16, 81, 81, 0.16);
+  background: #fff;
+  padding: 0 var(--space-3);
+  font-size: 0.875rem;
+  color: var(--foreground);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.cal-nav-btn:hover {
+  background: var(--brand-foam);
+}
+.cal-range {
+  font-size: 0.875rem;
+  color: rgba(15, 41, 38, 0.65);
+}
+.cal-board {
+  overflow-x: auto;
+  border-radius: var(--radius-panel);
+  border: 1px solid rgba(16, 81, 81, 0.1);
+  background: #fff;
+}
+.cal-head {
+  border-bottom: 1px solid rgba(16, 81, 81, 0.1);
+  background: rgba(227, 255, 252, 0.55);
+  padding: var(--space-2);
+}
+.cal-head--day {
+  border-left: 1px solid rgba(16, 81, 81, 0.1);
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(15, 41, 38, 0.65);
+}
+.cal-time {
+  border-bottom: 1px solid rgba(16, 81, 81, 0.06);
+  padding: 2px 4px;
+  text-align: right;
+  font-size: 10px;
+  color: rgba(15, 41, 38, 0.45);
+}
+.cal-slot {
+  position: relative;
+  height: 1.75rem;
+  border-bottom: 1px solid rgba(16, 81, 81, 0.06);
+  border-left: 1px solid rgba(16, 81, 81, 0.06);
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.cal-slot--free:hover {
+  background: rgba(227, 255, 252, 0.8);
+}
+.cal-slot--locked {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.cal-slot--appt {
+  background: var(--brand-forest);
+  color: #fff;
+}
+.cal-slot--appt:hover {
+  background: #0c4040;
+}
+.cal-slot--appt-cont {
+  background: color-mix(in srgb, var(--brand-forest) 38%, white);
+}
+.cal-slot__label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 var(--space-1);
+  font-size: 10px;
+  line-height: 1.75rem;
+}
+
+/* Clinic directory cards */
+.clinic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-5);
+}
+.clinic-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: clip;
+  border-radius: var(--radius-panel);
+  border: 1px solid rgba(16, 81, 81, 0.1);
+  background: #fff;
+}
+.clinic-card__media {
+  position: relative;
+  display: grid;
+  min-height: 140px;
+  place-items: center;
+  overflow: clip;
+}
+.clinic-card__media--forest {
+  background: linear-gradient(145deg, #105151 0%, #1a6b6b 55%, #0c4040 100%);
+}
+.clinic-card__media--lagoon {
+  background: linear-gradient(145deg, #25cec9 0%, #105151 100%);
+}
+.clinic-card__media--mist {
+  background: linear-gradient(145deg, #e3fffc 0%, #9ad9d4 45%, #105151 100%);
+}
+.clinic-card__pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle at 20% 30%,
+    rgba(255, 255, 255, 0.18) 0 2px,
+    transparent 3px
+  );
+  background-size: 18px 18px;
+  opacity: 0.5;
+}
+.clinic-card__initials {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+.clinic-card__media--mist .clinic-card__initials {
+  color: var(--brand-forest);
+}
+.clinic-card__media--compact {
+  min-height: 80px;
+}
+.clinic-card__media--cover {
+  min-height: 160px;
+  background: #105151;
+}
+.clinic-card__media--cover.clinic-card__media--compact {
+  min-height: 72px;
+}
+.clinic-card__cover {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.clinic-card__logo {
+  position: relative;
+  z-index: 1;
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 2px 10px rgba(15, 41, 38, 0.14);
+}
+.clinic-card__logo--sm {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(15, 41, 38, 0.12);
+}
+.clinic-card__icon {
+  position: relative;
+  z-index: 1;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 10px;
+  box-shadow: 0 1px 0 rgba(15, 41, 38, 0.08);
+}
+.clinic-card__icon--sm {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  padding: 6px;
+}
+.clinic-card__body {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+.clinic-card__meta {
+  font-size: 0.75rem;
+  color: rgba(15, 41, 38, 0.55);
+}
+.clinic-card__title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--foreground);
+}
+.clinic-card__province {
+  font-size: 0.8125rem;
+  color: rgba(15, 41, 38, 0.65);
+}
+.clinic-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+.btn-ghost {
+  border: 1px solid rgba(16, 81, 81, 0.18);
+  background: transparent;
+  color: var(--brand-forest);
+}
+.btn-ghost:hover {
+  background: var(--brand-foam);
+}
+
+/* Steady loading — opacity only, no pulse that cuts mid-transition */
+.skeleton-block {
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--brand-forest) 8%, white);
+  opacity: 0.85;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.preview-profile {
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+/* Preview: one panel — profile band + booking (full width, no side squeeze) */
+.preview-panel {
+  display: grid;
+  min-width: 0;
+  border-radius: var(--radius-panel);
+  border: 1px solid rgba(16, 81, 81, 0.12);
+  background: #fff;
+}
+.preview-panel__profile {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-bottom: 1px solid rgba(16, 81, 81, 0.1);
+  background: color-mix(in srgb, var(--brand-foam) 40%, white);
+}
+.preview-panel__booking {
+  min-width: 0;
+  padding: var(--space-5);
+}
+.preview-panel__profile .clinic-card__media--compact {
+  min-height: 48px;
+}
+.preview-panel__profile .clinic-card__media--cover.clinic-card__media--compact {
+  min-height: 48px;
+  width: 48px;
+  border-radius: var(--radius-control);
+}
+
+/* Date chips: thin scrollbar, no fat Linux overlay bar */
+.preview-date-scroller {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(16, 81, 81, 0.28) transparent;
+}
+.preview-date-scroller::-webkit-scrollbar {
+  height: 6px;
+}
+.preview-date-scroller::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(16, 81, 81, 0.28);
+}
+.preview-date-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .btn:active:not(:disabled) {
+    transform: none;
+  }
 }

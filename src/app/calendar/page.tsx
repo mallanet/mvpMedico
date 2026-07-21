@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { CalendarIsland } from "@/components/calendar/calendar-island";
+import { PageHeader } from "@/components/page-header";
 import { Banner } from "@/components/ui/banner";
-import { getClinicContext, hasActiveMembership } from "@/lib/clinic-context";
+import {
+  getClinicContext,
+  hasActiveMembership,
+} from "@/lib/clinic-context";
 import { createClient } from "@/lib/supabase/server";
-import type { Appointment, ExternalEvent } from "@/lib/types";
+import type { Appointment } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -11,29 +15,20 @@ export default async function CalendarPage() {
   const ctx = await getClinicContext();
   if (!ctx?.resource.id) {
     return (
-      <p className="text-sm text-teal-900/70">
-        No hay contexto de clínica. Completá el alta o contactá soporte.
+      <p className="text-sm leading-relaxed text-[color:var(--foreground)]/70">
+        No encontramos tu clínica. Terminá el alta o escribile a soporte.
       </p>
     );
   }
 
   const supabase = await createClient();
-  const [{ data: appointments }, { data: externalEvents }] = await Promise.all([
-    supabase
-      .from("appointments")
-      .select(
-        "id, resource_id, patient_id, starts_at, ends_at, status, notes, patients_min(id, full_name, phone, email)",
-      )
-      .eq("resource_id", ctx.resource.id)
-      .order("starts_at", { ascending: true }),
-    supabase
-      .from("external_events")
-      .select("id, resource_id, starts_at, ends_at, summary")
-      .eq("resource_id", ctx.resource.id)
-      .order("starts_at", { ascending: true }),
-  ]);
-
-  const membershipActive = hasActiveMembership(ctx);
+  const { data: appointments } = await supabase
+    .from("appointments")
+    .select(
+      "id, resource_id, patient_id, starts_at, ends_at, status, notes, patients_min(id, full_name, phone, email)",
+    )
+    .eq("resource_id", ctx.resource.id)
+    .order("starts_at", { ascending: true });
 
   const normalizedAppointments: Appointment[] = (appointments ?? []).map(
     (row) => {
@@ -53,48 +48,45 @@ export default async function CalendarPage() {
     },
   );
 
+  const membershipActive = hasActiveMembership(ctx);
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-teal-950">Agenda</h1>
-          <p className="text-sm text-teal-900/70">
-            {ctx.resource.display_name}
-            {ctx.landing?.slug ? (
-              <>
-                {" · "}
-                <Link
-                  href={`/l/${ctx.landing.slug}`}
-                  className="text-teal-800 underline"
-                >
-                  /l/{ctx.landing.slug}
-                </Link>
-              </>
-            ) : null}
-          </p>
+      <PageHeader title="Agenda" description={ctx.resource.display_name}>
+        <div className="flex flex-wrap items-center gap-3">
+          {ctx.landing?.slug ? (
+            <Link
+              href={`/l/${ctx.landing.slug}`}
+              className="text-sm font-medium text-[color:var(--brand-forest)] underline underline-offset-2"
+            >
+              /l/{ctx.landing.slug}
+            </Link>
+          ) : null}
+          <span
+            className={`inline-flex min-h-8 items-center rounded-[var(--radius-control)] px-3 text-xs font-medium ${
+              membershipActive
+                ? "bg-[color:var(--brand-foam)] text-[color:var(--brand-forest)]"
+                : "bg-amber-50 text-amber-950"
+            }`}
+          >
+            Membresía{" "}
+            {membershipActive
+              ? "activa"
+              : (ctx.membership?.status ?? "pausada")}
+          </span>
         </div>
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
-            membershipActive
-              ? "bg-teal-100 text-teal-900"
-              : "bg-amber-100 text-amber-900"
-          }`}
-        >
-          Membresía {membershipActive ? "activa" : (ctx.membership?.status ?? "pausada")}
-        </span>
-      </div>
+      </PageHeader>
 
       {!membershipActive ? (
         <Banner>
-          Tu membresía está pausada. Contactá al admin. Podés ver la agenda pero no
-          crear, mover ni cancelar turnos.
+          Tu membresía está pausada: podés mirar la agenda, pero no crear, mover
+          ni cancelar turnos. Pedile al admin que la reactive.
         </Banner>
       ) : null}
 
       <CalendarIsland
         resourceId={ctx.resource.id}
         appointments={normalizedAppointments}
-        externalEvents={(externalEvents as ExternalEvent[]) ?? []}
         membershipActive={membershipActive}
       />
     </div>

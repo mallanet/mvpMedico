@@ -1,21 +1,13 @@
 import type { Metadata } from "next";
-import { DM_Sans, Source_Serif_4 } from "next/font/google";
 import { AppNav } from "@/components/app-nav";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
-});
-
-const sourceSerif = Source_Serif_4({
-  variable: "--font-source-serif",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   title: "Waira · mvpMedico",
-  description: "Agenda centralizada para médicos — anti-solape e integraciones",
+  description: "Agenda para médicos sin dobles reservas",
+  icons: {
+    icon: "/brand/waira-favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -25,11 +17,42 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${dmSans.variable} ${sourceSerif.variable} antialiased`}>
+      <body className="antialiased">
+        <a href="#content" className="skip-link">
+          Saltar al contenido
+        </a>
         <AppNav />
-        <main className="mx-auto min-h-[calc(100vh-4rem)] max-w-6xl px-4 py-8">
+        <main
+          id="content"
+          className="mx-auto min-h-[calc(100vh-4rem)] max-w-6xl px-4 py-8 sm:px-6"
+        >
           {children}
         </main>
+        <footer className="border-t border-teal-900/10">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm text-teal-900/70 sm:px-6">
+            <p className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element -- brand SVG from /public */}
+              <img
+                src="/brand/waira-isotipo.svg"
+                alt=""
+                width={20}
+                height={16}
+                className="h-4 w-auto"
+              />
+              <span>Agenda sin dobles reservas</span>
+            </p>
+            <p>
+              <a
+                href="https://mallanet.org"
+                className="font-medium text-teal-800 underline-offset-2 hover:underline"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Mallanet
+              </a>
+            </p>
+          </div>
+        </footer>
       </body>
     </html>
   );

@@ -1,0 +1,548 @@
+{
+  "meta": {
+    "generated": "2026-07-21",
+    "note": "Directorio seed de clínicas y hospitales en Ecuador. Logos generados en alta calidad sobre banner vectorial.",
+    "sources": [
+      "https://achpe.org.ec/directorio-de-achpe/",
+      "https://www.salud.gob.ec/",
+      "https://www.iess.gob.ec/",
+      "https://www.hospitalmetropolitano.org/",
+      "https://hospitalvozandes.com/",
+      "https://hospitaldelosvalles.com/",
+      "https://hospitalalcivar.com/",
+      "https://omnihospital.ec/",
+      "https://hospikennedy.med.ec/",
+      "https://clinicaguayaquil.com/",
+      "https://hagp.gob.ec/",
+      "https://www.solca.med.ec/",
+      "https://www.yelu.ec/category/Hospitales"
+    ],
+    "iconsFetched": "2026-07-21",
+    "bannersGenerated": "2026-07-21",
+    "logosGenerated": "2026-07-21"
+  },
+  "clinics": [
+    {
+      "id": "metropolitano-quito",
+      "name": "Hospital Metropolitano",
+      "city": "Quito",
+      "province": "Pichincha",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://www.hospitalmetropolitano.org/",
+      "seo": {
+        "primary_keywords": [
+          "hospital metropolitano quito",
+          "hospital privado quito"
+        ],
+        "notes": "Referente privado; aparece en rankings IntelLat / HospiRank 2025 como #1 Ecuador."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "forest",
+        "src": "/clinics/metropolitano-quito-banner.svg",
+        "logo": "/clinics/metropolitano-quito-logo.png"
+      }
+    },
+    {
+      "id": "vozandes-quito",
+      "name": "Hospital Vozandes Quito",
+      "city": "Quito",
+      "province": "Pichincha",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://hospitalvozandes.com/",
+      "seo": {
+        "primary_keywords": [
+          "hospital vozandes quito",
+          "HVQ citas"
+        ],
+        "notes": "Presencia fuerte en búsqueda local; app HVQontigo y Bless Health Tower."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "lagoon",
+        "src": "/clinics/vozandes-quito-banner.svg",
+        "logo": "/clinics/vozandes-quito-logo.png"
+      }
+    },
+    {
+      "id": "valles-cumbaya",
+      "name": "Hospital de los Valles",
+      "city": "Cumbayá",
+      "province": "Pichincha",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://hospitaldelosvalles.com/",
+      "seo": {
+        "primary_keywords": [
+          "hospital de los valles",
+          "hospital cumbayá"
+        ],
+        "notes": "Sedes Cumbayá y Quito Norte; CTA web de agendamiento."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "forest",
+        "src": "/clinics/valles-cumbaya-banner.svg",
+        "logo": "/clinics/valles-cumbaya-logo.png"
+      }
+    },
+    {
+      "id": "northospital-quito",
+      "name": "Northospital",
+      "city": "Quito",
+      "province": "Pichincha",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://northospital.ec/",
+      "seo": {
+        "primary_keywords": [
+          "northospital quito",
+          "hospital norte quito"
+        ],
+        "notes": "Tercer nivel; posicionamiento norte de Quito."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "mist",
+        "src": "/clinics/northospital-quito-banner.svg",
+        "logo": "/clinics/northospital-quito-logo.png"
+      }
+    },
+    {
+      "id": "clinica-internacional-quito",
+      "name": "Clínica Internacional",
+      "city": "Quito",
+      "province": "Pichincha",
+      "type": "clinica",
+      "sector": "privado",
+      "website": "https://www.clinicainternacional.com.ec/",
+      "seo": {
+        "primary_keywords": [
+          "clínica internacional quito"
+        ],
+        "notes": "Miembro histórico ACHPE; verificar URL canónica al enriquecer."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "lagoon",
+        "src": "/clinics/clinica-internacional-quito-banner.svg",
+        "logo": "/clinics/clinica-internacional-quito-logo.png"
+      }
+    },
+    {
+      "id": "solca-quito",
+      "name": "SOLCA Núcleo de Quito",
+      "city": "Quito",
+      "province": "Pichincha",
+      "type": "hospital",
+      "sector": "especializado",
+      "website": "https://solcaquito.org.ec/",
+      "seo": {
+        "primary_keywords": [
+          "solca quito",
+          "oncología quito"
+        ],
+        "notes": "Oncología; alto intent de búsqueda por especialidad."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "forest",
+        "src": "/clinics/solca-quito-banner.svg",
+        "logo": "/clinics/solca-quito-logo.png"
+      }
+    },
+    {
+      "id": "alcivar-gye",
+      "name": "Hospital Alcívar",
+      "city": "Guayaquil",
+      "province": "Guayas",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://hospitalalcivar.com/",
+      "seo": {
+        "primary_keywords": [
+          "hospital alcívar",
+          "hospital alcivar guayaquil"
+        ],
+        "notes": "Fundado 1937; fuerte marca local y WhatsApp Higía."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "forest",
+        "src": "/clinics/alcivar-gye-banner.svg",
+        "logo": "/clinics/alcivar-gye-logo.png"
+      }
+    },
+    {
+      "id": "kennedy-gye",
+      "name": "Grupo Hospitalario Kennedy",
+      "city": "Guayaquil",
+      "province": "Guayas",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://hospikennedy.med.ec/",
+      "seo": {
+        "primary_keywords": [
+          "clínica kennedy guayaquil",
+          "hospital kennedy"
+        ],
+        "notes": "Multi-sede (Kennedy, Alborada, Samborondón); alto volumen de búsqueda."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "lagoon",
+        "src": "/clinics/kennedy-gye-banner.svg",
+        "logo": "/clinics/kennedy-gye-logo.png"
+      }
+    },
+    {
+      "id": "omni-gye",
+      "name": "Omni Hospital",
+      "city": "Guayaquil",
+      "province": "Guayas",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://omnihospital.ec/",
+      "seo": {
+        "primary_keywords": [
+          "omnihospital",
+          "omni hospital guayaquil"
+        ],
+        "notes": "Aparece en IntelLat 2025 junto a Metropolitano."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "mist",
+        "src": "/clinics/omni-gye-banner.svg",
+        "logo": "/clinics/omni-gye-logo.png"
+      }
+    },
+    {
+      "id": "clinica-guayaquil",
+      "name": "Clínica Guayaquil",
+      "city": "Guayaquil",
+      "province": "Guayas",
+      "type": "clinica",
+      "sector": "privado",
+      "website": "https://clinicaguayaquil.com/",
+      "seo": {
+        "primary_keywords": [
+          "clínica guayaquil",
+          "clinica guayaquil especialidades"
+        ],
+        "notes": "Más de 100 años; SEO de especialidades y directorio médico."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "forest",
+        "src": "/clinics/clinica-guayaquil-banner.svg",
+        "logo": "/clinics/clinica-guayaquil-logo.png"
+      }
+    },
+    {
+      "id": "santamaria-gye",
+      "name": "Hospital Santamaria",
+      "city": "Guayaquil",
+      "province": "Guayas",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://hospitalsantamaria.com.ec/",
+      "seo": {
+        "primary_keywords": [
+          "hospital santamaria guayaquil"
+        ],
+        "notes": "Posicionamiento bariátrica / especialidades."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "lagoon",
+        "src": "/clinics/santamaria-gye-banner.svg",
+        "logo": "/clinics/santamaria-gye-logo.png"
+      }
+    },
+    {
+      "id": "panamericana-gye",
+      "name": "Hospital Clínica Panamericana",
+      "city": "Guayaquil",
+      "province": "Guayas",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://www.farmadent.com.ec/centro-medico/",
+      "seo": {
+        "primary_keywords": [
+          "clínica panamericana guayaquil"
+        ],
+        "notes": "Call center 1800; verificar dominio canónico del hospital."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "mist",
+        "src": "/clinics/panamericana-gye-banner.svg",
+        "logo": "/clinics/panamericana-gye-logo.png"
+      }
+    },
+    {
+      "id": "hagp-gye",
+      "name": "Hospital de Especialidades Abel Gilbert Pontón",
+      "city": "Guayaquil",
+      "province": "Guayas",
+      "type": "hospital",
+      "sector": "publico",
+      "website": "https://hagp.gob.ec/",
+      "seo": {
+        "primary_keywords": [
+          "hospital abel gilbert",
+          "hagp guayaquil"
+        ],
+        "notes": "MSP tercer nivel costa; dominio .gob.ec."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "forest",
+        "src": "/clinics/hagp-gye-banner.svg",
+        "logo": "/clinics/hagp-gye-logo.png"
+      }
+    },
+    {
+      "id": "solca-gye",
+      "name": "SOLCA Matriz Guayaquil",
+      "city": "Guayaquil",
+      "province": "Guayas",
+      "type": "hospital",
+      "sector": "especializado",
+      "website": "https://www.solca.med.ec/",
+      "seo": {
+        "primary_keywords": [
+          "solca guayaquil",
+          "cáncer ecuador"
+        ],
+        "notes": "Instituto oncológico nacional; alto intent de búsqueda."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "lagoon",
+        "src": "/clinics/solca-gye-banner.svg",
+        "logo": "/clinics/solca-gye-logo.png"
+      }
+    },
+    {
+      "id": "monte-sinai-cuenca",
+      "name": "Hospital Monte Sinaí",
+      "city": "Cuenca",
+      "province": "Azuay",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://www.hospitalmontesinai.med.ec/",
+      "seo": {
+        "primary_keywords": [
+          "hospital monte sinaí cuenca",
+          "monte sinai cuenca"
+        ],
+        "notes": "ACHPE; verificar URL canónica al enriquecer."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "forest",
+        "src": "/clinics/monte-sinai-cuenca-banner.svg",
+        "logo": "/clinics/monte-sinai-cuenca-logo.png"
+      }
+    },
+    {
+      "id": "santa-ines-cuenca",
+      "name": "Hospital Clínica Santa Inés",
+      "city": "Cuenca",
+      "province": "Azuay",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://www.santaines.med.ec/",
+      "seo": {
+        "primary_keywords": [
+          "santa inés cuenca",
+          "hospital santa ines"
+        ],
+        "notes": "Prestador IESS / redes privadas; URL a confirmar."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "mist",
+        "src": "/clinics/santa-ines-cuenca-banner.svg",
+        "logo": "/clinics/santa-ines-cuenca-logo.png"
+      }
+    },
+    {
+      "id": "san-juan-dios-cuenca",
+      "name": "Hospital San Juan de Dios",
+      "city": "Cuenca",
+      "province": "Azuay",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://www.sanjuandedios.med.ec/",
+      "seo": {
+        "primary_keywords": [
+          "san juan de dios cuenca"
+        ],
+        "notes": "Convenios aseguradoras; citas por WhatsApp documentado."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "lagoon",
+        "src": "/clinics/san-juan-dios-cuenca-banner.svg",
+        "logo": "/clinics/san-juan-dios-cuenca-logo.png"
+      }
+    },
+    {
+      "id": "espana-cuenca",
+      "name": "Clínica España",
+      "city": "Cuenca",
+      "province": "Azuay",
+      "type": "clinica",
+      "sector": "privado",
+      "website": "https://clinicaespana.med.ec/",
+      "seo": {
+        "primary_keywords": [
+          "clínica españa cuenca"
+        ],
+        "notes": "SEO local cerca del terminal terrestre."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "forest",
+        "src": "/clinics/espana-cuenca-banner.svg",
+        "logo": "/clinics/espana-cuenca-logo.png"
+      }
+    },
+    {
+      "id": "humanitario-cuenca",
+      "name": "Hospital Humanitario",
+      "city": "Cuenca",
+      "province": "Azuay",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://www.hospitalhumanitario.org/",
+      "seo": {
+        "primary_keywords": [
+          "hospital humanitario cuenca",
+          "pablo jaramillo"
+        ],
+        "notes": "Fundación; foco materno infantil."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "mist",
+        "src": "/clinics/humanitario-cuenca-banner.svg",
+        "logo": "/clinics/humanitario-cuenca-logo.png"
+      }
+    },
+    {
+      "id": "duran-ambato",
+      "name": "Hospital Durán",
+      "city": "Ambato",
+      "province": "Tungurahua",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://hospitalduran.com/",
+      "seo": {
+        "primary_keywords": [
+          "hospital durán ambato",
+          "clinica duran ambato"
+        ],
+        "notes": "ACHPE / redes BMI."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "forest",
+        "src": "/clinics/duran-ambato-banner.svg",
+        "logo": "/clinics/duran-ambato-logo.png"
+      }
+    },
+    {
+      "id": "crehvital-ambato",
+      "name": "Hospital Crehvital",
+      "city": "Ambato",
+      "province": "Tungurahua",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://hec.com.ec/",
+      "seo": {
+        "primary_keywords": [
+          "crehvital ambato",
+          "hospital especialidades ambato"
+        ],
+        "notes": "+35 años; zona centro del país."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "lagoon",
+        "src": "/clinics/crehvital-ambato-banner.svg",
+        "logo": "/clinics/crehvital-ambato-logo.png"
+      }
+    },
+    {
+      "id": "clinica-ambato",
+      "name": "Hospital General Privado Ambato",
+      "city": "Ambato",
+      "province": "Tungurahua",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://hospitalambato.com/",
+      "seo": {
+        "primary_keywords": [
+          "clínica ambato",
+          "hospital privado ambato"
+        ],
+        "notes": "Marca local de larga data."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "mist",
+        "src": "/clinics/clinica-ambato-banner.svg",
+        "logo": "/clinics/clinica-ambato-logo.png"
+      }
+    },
+    {
+      "id": "tungurahua-ambato",
+      "name": "Hospital Privado Tungurahua",
+      "city": "Ambato",
+      "province": "Tungurahua",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://www.clinicatungurahua.com/",
+      "seo": {
+        "primary_keywords": [
+          "clínica tungurahua ambato"
+        ],
+        "notes": "SEO de seguros privados locales."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "forest",
+        "src": "/clinics/tungurahua-ambato-banner.svg",
+        "logo": "/clinics/tungurahua-ambato-logo.png"
+      }
+    },
+    {
+      "id": "san-agustin-loja",
+      "name": "Hospital Clínica San Agustín",
+      "city": "Loja",
+      "province": "Loja",
+      "type": "hospital",
+      "sector": "privado",
+      "website": "https://www.sanagustin.med.ec/",
+      "seo": {
+        "primary_keywords": [
+          "san agustín loja",
+          "clínica san agustin loja"
+        ],
+        "notes": "ACHPE; URL a confirmar al enriquecer."
+      },
+      "image": {
+        "kind": "cover",
+        "accent": "lagoon",
+        "src": "/clinics/san-agustin-loja-banner.svg",
+        "logo": "/clinics/san-agustin-loja-logo.png"
+      }
+    }
+  ]
+}

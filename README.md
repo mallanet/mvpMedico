@@ -1,6 +1,6 @@
 # mvpMedico (Waira)
 
-Agenda centralizada para médicos: anti-solape, landing pública, asistente web de reserva e integración Google Calendar (busy → bloqueo).
+Agenda centralizada para médicos: anti-solape, landing pública y asistente web de reserva.
 
 Producto / negocio: ver [`base.md`](./base.md).  
 Contrato de agentes (obligatorio): [`AGENTS.md`](./AGENTS.md).  
@@ -80,7 +80,8 @@ update public.profiles set role = 'admin_waira' where id = '<user-id>';
 3. `/onboarding` → publicar landing
 4. `/calendar` → grilla Lun–Sáb 08–20 (anti-solape en DB)
 5. `/l/<slug>` → reserva pública con slots de 30 min
-6. `/settings/google` → OAuth + sync FreeBusy (requiere vars Google; sin ellas → 501)
+6. `/preview` → sandbox: elegí cualquier clínica del directorio, pedí turno (localStorage), `/preview/agenda` para la grilla demo
+7. `/clinicas` → directorio seed Ecuador (no son tenants Waira reales)
 
 ## Scripts
 
@@ -91,8 +92,37 @@ update public.profiles set role = 'admin_waira' where id = '<user-id>';
 | `npm run lint` | ESLint |
 | `npm run test:e2e` | Playwright |
 | `npm run db:start` / `db:reset` | Supabase local |
+| `npm run icons:clinics` | Descargar favicons a `public/clinics/` |
+| `npm run banners:clinics` | Regenerar banners SVG a ancho completo |
+| `npm run cf:build` | Build OpenNext para Cloudflare Workers |
+| `npm run cf:deploy` | Build + deploy a Cloudflare |
+| `npm run cf:preview` | Preview local del worker |
 
-## E2E
+## Deploy (Cloudflare Workers — review continuo)
+
+Cada push a `main` o `feature/**` dispara [`.github/workflows/deploy-cloudflare.yml`](.github/workflows/deploy-cloudflare.yml).
+
+Secrets de GitHub requeridos:
+
+- `CLOUDFLARE_API_TOKEN` — token con permiso Workers Edit
+- `CLOUDFLARE_ACCOUNT_ID`
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_APP_URL` — URL pública del worker (ej. `https://waira-mvpmedico.<subdomain>.workers.dev`)
+- `NEXT_PUBLIC_MALLANET_DONATION_URL` (opcional)
+
+Local (con Node ≥22 y token en el entorno):
+
+```bash
+export CLOUDFLARE_API_TOKEN=...
+export CLOUDFLARE_ACCOUNT_ID=...
+npm run cf:deploy
+```
+
+Worker name: `waira-mvpmedico` ([`wrangler.jsonc`](wrangler.jsonc)).
+
+## Deploy (Vercel + Supabase Cloud)
+
+Checklist mínimo para que el deploy no rompa auth:
 
 Smoke tests corren sin backend real (home + login UI).
 
@@ -109,16 +139,9 @@ Checklist mínimo (base.md §9):
 - [ ] Cancelar turno
 - [ ] Reservar desde landing
 
-## Google Calendar
-
-1. Google Cloud Console → OAuth client (web)
-2. Redirect: `http://localhost:3000/api/google/callback` (o tu dominio)
-3. Scopes: `calendar.readonly` (FreeBusy)
-4. Completar `GOOGLE_*` en `.env.local` / Vercel
-
 ## Deploy (Vercel + Supabase Cloud)
 
-Checklist mínimo para que el deploy no rompa auth ni Google:
+Checklist mínimo para que el deploy no rompa auth:
 
 1. **Supabase Cloud**
    - Crear proyecto → Settings → API: copiar `URL`, `anon`, `service_role`
@@ -137,28 +160,19 @@ Checklist mínimo para que el deploy no rompa auth ni Google:
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | sí | Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | sí | anon public |
-| `SUPABASE_SERVICE_ROLE_KEY` | sí* | solo server (sync Google); sin ella el resto de la app funciona |
+| `SUPABASE_SERVICE_ROLE_KEY` | no | solo server si hace falta admin |
 | `NEXT_PUBLIC_APP_URL` | sí | `https://tu-dominio.vercel.app` (sin `/` final) |
 | `NEXT_PUBLIC_MALLANET_DONATION_URL` | no | CTA donación |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | no | sin ellas Google → 501 |
-| `GOOGLE_REDIRECT_URI` | no† | default: `$NEXT_PUBLIC_APP_URL/api/google/callback` |
 
-\* Requerida solo para `/api/google/sync`.  
-† Si la definís, debe coincidir **exactamente** con Google Cloud Console.
-
-3. **Google Cloud** (opcional)
-   - OAuth client tipo Web
-   - Authorized redirect URI: `https://tu-dominio.vercel.app/api/google/callback`
-   - Scope: `calendar.readonly`
-
-4. **Smoke post-deploy**
+3. **Smoke post-deploy**
    - `/` carga
    - `/signup` crea cuenta y llega a `/onboarding` (o email link si confirmación está on)
    - Activar membresía (SQL o `/admin/memberships` con `admin_waira`)
    - `/calendar` grilla
    - `/l/<slug>` reserva
+   - `/preview` perfil demo
 
-5. **Redeploy** después de cambiar `NEXT_PUBLIC_*` (se inlinerán en el build).
+4. **Redeploy** después de cambiar `NEXT_PUBLIC_*` (se inlinerán en el build).
 
 ## Estructura
 
@@ -168,13 +182,14 @@ Checklist mínimo para que el deploy no rompa auth ni Google:
 ├── AGENTS.md
 ├── CONTRIBUTING.md
 ├── README.md
+├── data/             # seeds (p.ej. ecuador-clinics.json)
 ├── specs/
 ├── e2e/
 ├── supabase/migrations/
 └── src/
     ├── app/          # rutas públicas + panel
     ├── components/
-    └── lib/          # supabase, appointments, google
+    └── lib/          # supabase, appointments, slots
 ```
 
 ## Convenciones

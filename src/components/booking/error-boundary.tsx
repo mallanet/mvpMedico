@@ -15,8 +15,11 @@ export class BookingErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <p className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">
-          No se pudo cargar el formulario de reserva. Recargá la página.
+        <p
+          className="rounded-[var(--radius-panel)] border border-red-200 bg-red-50 p-5 text-sm text-red-800"
+          role="alert"
+        >
+          No cargó el formulario de reserva. Probá recargar.
         </p>
       );
     }
