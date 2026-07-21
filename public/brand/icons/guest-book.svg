@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-labelledby="t">
+  <title id="t">Reserva sin cuenta</title>
+  <circle cx="32" cy="22" r="10" stroke="#105151" stroke-width="2.5"/>
+  <path d="M14 50c2.5-10 10-15 18-15s15.5 5 18 15" stroke="#105151" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="46" cy="46" r="12" fill="#f3f7f6" stroke="#25cec9" stroke-width="2.5"/>
+  <path d="M46 40v12M40 46h12" stroke="#105151" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

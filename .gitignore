@@ -11,6 +11,8 @@ playwright-report/
 test-results/
 blob-report/
 .vercel
+.open-next
+.wrangler
 supabase/.branches
 supabase/.temp
 

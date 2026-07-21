@@ -1,0 +1,37 @@
+/* Hallmark · portable token export — runtime via globals @import */
+:root {
+  --brand-forest: #105151;
+  --brand-lagoon: #25cec9;
+  --brand-foam: #e3fffc;
+  --background: #f3f7f6;
+  --foreground: #0f2926;
+  --accent: #105151;
+  --color-paper: var(--background);
+  --color-ink: var(--foreground);
+  --color-accent: var(--accent);
+  --font-elms-sans: "Elms Sans";
+  --font-display: var(--font-elms-sans);
+  --font-body: var(--font-elms-sans);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-sm: var(--space-2);
+  --space-md: var(--space-4);
+  --space-lg: var(--space-5);
+  --space-xl: var(--space-6);
+  --space-2xl: var(--space-7);
+  --space-3xl: var(--space-8);
+  --control-h: 44px;
+  --radius-control: 8px;
+  --radius-panel: 16px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+  --dur-fast: 150ms;
+  --rule-hairline: 1px solid rgba(16, 81, 81, 0.12);
+}

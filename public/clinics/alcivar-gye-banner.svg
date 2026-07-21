@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="480" viewBox="0 0 1200 480" role="img" aria-label="Hospital Alcívar">
+  <defs>
+    <linearGradient id="g-alcivar-gye" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c4040"/>
+      <stop offset="55%" stop-color="#105151"/>
+      <stop offset="100%" stop-color="#1a6b6b"/>
+    </linearGradient>
+    <radialGradient id="v-alcivar-gye" cx="30%" cy="20%" r="70%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="d-alcivar-gye" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.4" fill="#ffffff" fill-opacity="0.14"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="480" fill="url(#g-alcivar-gye)"/>
+  <rect width="1200" height="480" fill="url(#v-alcivar-gye)"/>
+  <rect width="1200" height="480" fill="url(#d-alcivar-gye)"/>
+  <g opacity="0.22" fill="none" stroke="#ffffff" stroke-width="2">
+    <circle cx="184" cy="135" r="140"/>
+    <circle cx="184" cy="135" r="92"/>
+    <circle cx="956" cy="315" r="170"/>
+  </g>
+  <text x="48" y="52" font-family="system-ui,Segoe UI,sans-serif" font-size="22" font-weight="600" letter-spacing="0.16em" fill="#ffffff" fill-opacity="0.75">HOSPITAL · GUAYAQUIL</text>
+</svg>

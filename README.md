@@ -1,6 +1,6 @@
 # mvpMedico (Waira)
 
-Agenda centralizada para médicos: anti-solape, landing pública, asistente web de reserva e integración Google Calendar (busy → bloqueo).
+Agenda centralizada para médicos: anti-solape, landing pública y asistente web de reserva.
 
 Producto / negocio: ver [`base.md`](./base.md).  
 Contrato de agentes (obligatorio): [`AGENTS.md`](./AGENTS.md).  
@@ -57,9 +57,18 @@ npm run dev
 
 Abrí [http://localhost:3000](http://localhost:3000).
 
-### 4. Primer médico
+### 4. Primer médico (o seed)
 
-1. `/signup` → crea `profiles`, clínica, `resource`, landing draft y membresía `paused`
+**Opción A — seed local** (después de `db reset`):
+
+| Usuario | Password | Notas |
+| --- | --- | --- |
+| `doctor@example.com` | `password123` | membresía activa, landing `/l/dra-demo` |
+| `admin@example.com` | `password123` | rol `admin_waira` |
+
+**Opción B — signup:**
+
+1. `/signup` → crea `profiles`, clínica, `resource`, landing draft y membresía `paused` (triggers)
 2. Activá membresía (SQL o Admin Waira):
 
 ```sql
@@ -69,9 +78,10 @@ update public.profiles set role = 'admin_waira' where id = '<user-id>';
 ```
 
 3. `/onboarding` → publicar landing
-4. `/calendar` → crear turnos (anti-solape en DB)
-5. `/l/<slug>` → reserva pública
-6. `/settings/google` → OAuth + sync FreeBusy (requiere vars Google)
+4. `/calendar` → grilla Lun–Sáb 08–20 (anti-solape en DB)
+5. `/l/<slug>` → reserva pública con slots de 30 min
+6. `/preview` → sandbox: elegí cualquier clínica del directorio, pedí turno (localStorage), `/preview/agenda` para la grilla demo
+7. `/clinicas` → directorio seed Ecuador (no son tenants Waira reales)
 
 ## Scripts
 
@@ -82,8 +92,43 @@ update public.profiles set role = 'admin_waira' where id = '<user-id>';
 | `npm run lint` | ESLint |
 | `npm run test:e2e` | Playwright |
 | `npm run db:start` / `db:reset` | Supabase local |
+| `npm run icons:clinics` | Descargar favicons a `public/clinics/` |
+| `npm run banners:clinics` | Regenerar banners SVG a ancho completo |
+| `npm run cf:build` | Build OpenNext para Cloudflare Workers |
+| `npm run cf:deploy` | Build + deploy a Cloudflare |
+| `npm run cf:preview` | Preview local del worker |
 
-## E2E
+## Deploy (Cloudflare Workers — review continuo)
+
+**Live preview:** [https://waira-mvpmedico.mariopulice21.workers.dev](https://waira-mvpmedico.mariopulice21.workers.dev)
+
+| Campo | Valor |
+| --- | --- |
+| Worker | `waira-mvpmedico` ([`wrangler.jsonc`](wrangler.jsonc)) |
+| Account ID | `7c582f80af4d212ed9dbf3e22ba591a8` |
+| URL | `https://waira-mvpmedico.mariopulice21.workers.dev` |
+
+Cada push a `main` o `feature/**` dispara [`.github/workflows/deploy-cloudflare.yml`](.github/workflows/deploy-cloudflare.yml).
+
+Secrets de GitHub requeridos:
+
+- `CLOUDFLARE_API_TOKEN` — token con permiso Workers Edit
+- `CLOUDFLARE_ACCOUNT_ID` — `7c582f80af4d212ed9dbf3e22ba591a8`
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_APP_URL` — `https://waira-mvpmedico.mariopulice21.workers.dev`
+- `NEXT_PUBLIC_MALLANET_DONATION_URL` (opcional)
+
+Local (con Node ≥22 y token en el entorno):
+
+```bash
+export CLOUDFLARE_API_TOKEN=...
+export CLOUDFLARE_ACCOUNT_ID=7c582f80af4d212ed9dbf3e22ba591a8
+npm run cf:deploy
+```
+
+## Deploy (Vercel + Supabase Cloud)
+
+Checklist mínimo para que el deploy no rompa auth:
 
 Smoke tests corren sin backend real (home + login UI).
 
@@ -100,32 +145,40 @@ Checklist mínimo (base.md §9):
 - [ ] Cancelar turno
 - [ ] Reservar desde landing
 
-## Google Calendar
-
-1. Google Cloud Console → OAuth client (web)
-2. Redirect: `http://localhost:3000/api/google/callback` (o tu dominio)
-3. Scopes: `calendar.readonly` (FreeBusy)
-4. Completar `GOOGLE_*` en `.env.local` / Vercel
-
 ## Deploy (Vercel + Supabase Cloud)
 
-1. Crear proyecto en [Supabase](https://supabase.com)
-2. `npx supabase link --project-ref <ref>`
-3. `npx supabase db push`
-4. Importar el repo en Vercel
-5. Variables de entorno (Production):
+Checklist mínimo para que el deploy no rompa auth:
 
-| Variable | Notas |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon public |
-| `SUPABASE_SERVICE_ROLE_KEY` | solo server (sync Google) |
-| `NEXT_PUBLIC_APP_URL` | `https://tu-dominio.vercel.app` |
-| `NEXT_PUBLIC_MALLANET_DONATION_URL` | CTA donación |
-| `GOOGLE_CLIENT_ID` / `SECRET` / `REDIRECT_URI` | OAuth |
+1. **Supabase Cloud**
+   - Crear proyecto → Settings → API: copiar `URL`, `anon`, `service_role`
+   - Authentication → URL Configuration:
+     - Site URL: `https://tu-dominio.vercel.app`
+     - Redirect URLs: `https://tu-dominio.vercel.app/auth/callback`
+   - Authentication → Providers → Email: desactivar “Confirm email” en MVP (o el signup queda en limbo)
+   - SQL / CLI: `npx supabase link --project-ref <ref>` luego `npx supabase db push`
 
-6. Auth → Redirect URLs: `https://tu-dominio.vercel.app/auth/callback`
-7. Deploy
+2. **Vercel**
+   - Importar este repo (framework Next.js; `vercel.json` ya fija `npm ci` + `npm run build`)
+   - Node.js **22+** (`package.json` → `engines`)
+   - Environment Variables (Production **y** Preview):
+
+| Variable | Obligatoria | Notas |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | sí | Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | sí | anon public |
+| `SUPABASE_SERVICE_ROLE_KEY` | no | solo server si hace falta admin |
+| `NEXT_PUBLIC_APP_URL` | sí | `https://tu-dominio.vercel.app` (sin `/` final) |
+| `NEXT_PUBLIC_MALLANET_DONATION_URL` | no | CTA donación |
+
+3. **Smoke post-deploy**
+   - `/` carga
+   - `/signup` crea cuenta y llega a `/onboarding` (o email link si confirmación está on)
+   - Activar membresía (SQL o `/admin/memberships` con `admin_waira`)
+   - `/calendar` grilla
+   - `/l/<slug>` reserva
+   - `/preview` perfil demo
+
+4. **Redeploy** después de cambiar `NEXT_PUBLIC_*` (se inlinerán en el build).
 
 ## Estructura
 
@@ -135,13 +188,14 @@ Checklist mínimo (base.md §9):
 ├── AGENTS.md
 ├── CONTRIBUTING.md
 ├── README.md
+├── data/             # seeds (p.ej. ecuador-clinics.json)
 ├── specs/
 ├── e2e/
 ├── supabase/migrations/
 └── src/
     ├── app/          # rutas públicas + panel
     ├── components/
-    └── lib/          # supabase, appointments, google
+    └── lib/          # supabase, appointments, slots
 ```
 
 ## Convenciones

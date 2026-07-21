@@ -29,6 +29,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         password,
         options: {
           data: { full_name: fullName, role: "doctor" },
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
         },
       });
       if (signUpError) {
@@ -48,34 +49,35 @@ export function AuthForm({ mode }: { mode: Mode }) {
       }
     }
 
-    router.push("/calendar");
+    // DECISION: signup lands on onboarding; login goes to calendar.
+    router.push(mode === "signup" ? "/onboarding" : "/calendar");
     router.refresh();
   }
 
   return (
-    <form onSubmit={onSubmit} className="mx-auto flex w-full max-w-md flex-col gap-4">
+    <form onSubmit={onSubmit} className="flex w-full flex-col gap-4">
       {mode === "signup" ? (
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1.5 text-sm text-teal-950">
           Nombre completo
           <input
             name="fullName"
             required
-            className="rounded-lg border border-teal-900/15 bg-white px-3 py-2"
+            className="field"
             placeholder="Dra. Ana Pérez"
           />
         </label>
       ) : null}
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1.5 text-sm text-teal-950">
         Email
         <input
           name="email"
           type="email"
           required
           autoComplete="email"
-          className="rounded-lg border border-teal-900/15 bg-white px-3 py-2"
+          className="field"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1.5 text-sm text-teal-950">
         Contraseña
         <input
           name="password"
@@ -83,20 +85,19 @@ export function AuthForm({ mode }: { mode: Mode }) {
           required
           minLength={6}
           autoComplete={mode === "login" ? "current-password" : "new-password"}
-          className="rounded-lg border border-teal-900/15 bg-white px-3 py-2"
+          className="field"
         />
       </label>
       {error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+        <p
+          className="rounded-[var(--radius-control)] bg-red-50 px-3 py-2 text-sm text-red-700"
+          role="alert"
+        >
           {error}
         </p>
       ) : null}
-      <button
-        type="submit"
-        disabled={loading}
-        className="rounded-lg bg-teal-800 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-900 disabled:opacity-60"
-      >
-        {loading ? "Procesando…" : mode === "login" ? "Entrar" : "Crear cuenta"}
+      <button type="submit" disabled={loading} className="btn btn-primary">
+        {loading ? "Un segundo…" : mode === "login" ? "Entrar" : "Crear cuenta"}
       </button>
     </form>
   );

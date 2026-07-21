@@ -1,5 +1,5 @@
 export type AppRole = "doctor" | "reception" | "admin_waira";
-export type MembershipStatus = "active" | "paused";
+export type MembershipStatus = "active" | "paused" | "cancelled";
 export type AppointmentStatus = "scheduled" | "confirmed" | "cancelled";
 
 export type Profile = {
@@ -54,14 +54,6 @@ export type Appointment = {
   patients_min?: PatientMin | null;
 };
 
-export type ExternalEvent = {
-  id: string;
-  resource_id: string;
-  starts_at: string;
-  ends_at: string;
-  summary: string | null;
-};
-
 export type Membership = {
   id: string;
   clinic_id: string;
@@ -77,3 +69,12 @@ export type ClinicContext = {
   landing: Landing | null;
   directory: DirectoryProfile | null;
 };
+
+export type TimeSlot = {
+  startsAt: string;
+  endsAt: string;
+};
+
+/** Canonical overlap rejection copy for UI + E2E. */
+export const OVERLAP_MESSAGE =
+  "Ese horario ya está tomado. Elegí otro." as const;

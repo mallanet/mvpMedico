@@ -2,8 +2,8 @@
 
 Documento de alineación del equipo. Si algo de producto cambia, se edita acá (mejor en un PR que en un chat suelto).
 
-**Última actualización:** 2026-07-20  
-**Estado:** decisiones de arranque cerradas
+**Última actualización:** 2026-07-21  
+**Estado:** wire-up MVP funcional (agenda visual + slots + seed + gating)
 
 Nombres que usamos: **Waira** vende; **mvpMedico** es el repo y el producto técnico; **Mallanet** es el hub (directorio y donaciones).
 
@@ -22,7 +22,7 @@ Waira cobra una membresía. El médico recibe:
 1. Ficha en el directorio de Mallanet
 2. Landing propia (entre el directorio y la reserva)
 3. Formulario/asistente de contacto que escribe en la agenda
-4. Agenda central con anti-solape e integración con Google Calendar (leer ocupado y bloquear)
+4. Agenda central con anti-solape (fuente de verdad en Postgres; sin Google Calendar)
 
 No metemos HCE, telemedicina ni facturación de obras sociales en esta fase.
 
@@ -68,7 +68,7 @@ Mallanet (directorio)   Waira ($100/mes)            Donación opcional
 | Quién paga | Médico o clínica |
 | Cuánto | $100 USD/mes por membresía activa |
 | Meta | ≥100 membresías (~$10 000 MRR) |
-| Incluye | Perfil Mallanet + landing + asistente + agenda + Google Calendar (busy/bloqueo) |
+| Incluye | Perfil Mallanet + landing + asistente + agenda (anti-solape) |
 | Donación | Opcional, a Mallanet; no sustituye la membresía |
 | Cobro | Waira cobra la suscripción; Mallanet no |
 
@@ -80,7 +80,7 @@ Mallanet (directorio)   Waira ($100/mes)            Donación opcional
 
 | Rol | Hace |
 | --- | --- |
-| **Médico** | Agenda, bloques, confirma/cancela, conecta Google Calendar, edita perfil y landing |
+| **Médico** | Agenda, bloques, confirma/cancela, edita perfil y landing |
 | **Recepción** | Crea y mueve turnos, mira disponibilidad real |
 | **Paciente** | Encuentra al médico en Mallanet → landing → pide turno o contacto (sin cuenta obligatoria) |
 | **Admin Waira** | Activa membresías, publica u oculta perfiles en el directorio |
@@ -92,7 +92,7 @@ Permisos finos y multi-sede quedan fuera de v1.
 ## 6. MVP v1 — entra
 
 - [x] Auth (Supabase): médico + recepción
-- [x] Onboarding: cuenta → perfil → conectar calendario → publicar landing
+- [x] Onboarding: cuenta → perfil → publicar landing
 - [x] Perfil de directorio + flag “publicado en Mallanet”
 - [x] Landing por médico (especialidad, bio corta, CTA de reserva/contacto)
 - [x] Calendario por médico (`resource`)
@@ -100,11 +100,9 @@ Permisos finos y multi-sede quedan fuera de v1.
 - [x] Anti-solapamiento
 - [x] Formulario/asistente web que crea el turno (mensajería después, si hace falta)
 - [x] Datos mínimos del paciente visibles junto al turno
-- [x] Google Calendar: importar ocupado y bloquear huecos (sin sync bidireccional completo)
-- [x] Vista de conflictos si algo externo choca
 - [x] CTA opcional de donación a Mallanet en la landing (no bloquea la reserva)
 
-> Implementación inicial en el repo (2026-07-20). Activar membresía + Supabase local/cloud y credenciales Google para probar end-to-end.
+> Implementación inicial en el repo (2026-07-20). Activar membresía + Supabase local/cloud para probar end-to-end. Google Calendar retirado del MVP (2026-07-21).
 
 Éxito de producto: el médico con membresía es encontrable, tiene landing viva, y deja de mantener dos agendas a mano para el flujo principal de turnos.
 
@@ -116,7 +114,8 @@ Permisos finos y multi-sede quedan fuera de v1.
 - App nativa
 - Marketplace de precios o subasta de turnos
 - IA de diagnóstico
-- Escritura agresiva bidireccional a Google Calendar
+- Google Calendar / sync de calendarios externos
+- Escritura agresiva bidireccional a calendarios de terceros
 - Multi-país / HIPAA formal (más allá de acceso básico bien hecho)
 - Vivir solo de donaciones
 - Un médico en N clínicas el día 1
@@ -131,14 +130,13 @@ Paciente ──► Mallanet ──► Landing ──► Asistente / form
 Médico / Recepción ──► Next.js ◄──────────┘
                          │
                          ├─► Supabase (Auth + Postgres + RLS) ─ anti-solape
-                         ├─► Google Calendar (leer busy + bloquear)
                          └─► Mallanet (publicar perfil / CTA donación)
 ```
 
 - Postgres guarda la verdad de los turnos internos
-- Una integración no puede saltarse el anti-solape sin dejar rastro
+- El anti-solape no se salta: exclusion constraint en `appointments`
 - RLS por clínica / médico
-- Server Actions o API routes para sync y publicación de perfil
+- Server Actions o API routes para publicación de perfil
 - Landing y app en el mismo Next.js (rutas públicas vs autenticadas)
 
 ### Tablas mínimas
@@ -152,8 +150,6 @@ Médico / Recepción ──► Next.js ◄──────────┘
 - `landings` — slug, copy, CTA, flag donación
 - `appointments` — turnos
 - `patients_min` — nombre, teléfono, email opcional
-- `external_connections` — OAuth Google
-- `external_events` — espejo de busy para conflictos
 
 Constraint: no dos turnos activos solapados por `resource_id`.
 
@@ -198,7 +194,7 @@ Cuando exista el repo:
 | # | Tema | Decisión | Motivo |
 | --- | --- | --- | --- |
 | 1 | Reserva | Paciente desde landing **y** recepción/médico en la agenda | Sin paciente no sirve el directorio; sin recepción no cierra la clínica |
-| 2 | Google Calendar | v1 = leer busy + bloquear; sync full = fase 2 | Menos chance de romper el calendario del médico |
+| 2 | Google Calendar | Fuera del MVP — agenda Waira es la única fuente de verdad | Menos superficie de OAuth y conflictos visuales |
 | 3 | Unidad | Por médico | Consultorio/sala después |
 | 4 | Datos paciente | Nombre + teléfono; email opcional | Alcanza para contactar |
 | 5 | Multi-clínica | No en v1 | Onboarding y RLS más simples |
@@ -233,9 +229,9 @@ Weekly: avance hacia 100 membresías y una mejora landing→turno. Cada feature 
 2. [x] Proyecto Supabase + migrations (tablas §8)
 3. [x] Auth (email/password)
 4. [x] RLS + anti-solape (+ smoke E2E)
-5. [ ] Calendario semanal visual (hoy: lista de turnos)
+5. [x] Calendario semanal visual (grilla Lun–Sáb 08–20)
 6. [x] Landing pública por slug + formulario de reserva
-7. [x] Google Calendar OAuth (busy + block) — falta probar con credenciales reales
+7. [x] Google Calendar — retirado del MVP (2026-07-21)
 8. [x] `memberships` + flag publicar a Mallanet (manual / admin)
 9. [x] CTA donación Mallanet en la landing
 10. [x] README de setup local
@@ -248,23 +244,23 @@ Orden sugerido de trabajo. El scaffold de §6 está en el repo; esto es lo que f
 
 ### Crítico
 
-1. **Disponibilidad + slots** — horario de atención y turnos bookables (hoy se elige cualquier hora a mano)
-2. **Calendario semanal visual** — grilla usable para médico/recepción
-3. **Rol recepción** — invitar/usar recepción; signup hoy solo bootstrapéa médico
-4. **Cobro membresía** — Stripe u equivalente LatAm (hoy stub `active`/`paused`)
-5. **Deploy cloud** — Vercel + Supabase cloud (URL compartible)
+1. [x] **Disponibilidad + slots** — horario de atención y turnos bookables (30 min, Lun–Sáb)
+2. [x] **Calendario semanal visual** — grilla usable para médico/recepción
+3. [ ] **Rol recepción** — invitar/usar recepción; signup hoy solo bootstrapéa médico
+4. [ ] **Cobro membresía** — Stripe u equivalente LatAm (hoy stub `active`/`paused`/`cancelled`)
+5. [ ] **Deploy cloud** — Vercel + Supabase cloud (URL compartible)
 
 ### Integraciones / producto
 
-6. **Google Calendar E2E** — OAuth real + sync FreeBusy en un calendario de prueba
-7. **API Mallanet** — publicación real al directorio (hoy: flag + CTA)
-8. **Notificaciones** — email (o canal) al crear/cancelar turno
-9. **Confirmar turno** — flujo claro médico/recepción → `confirmed`
+6. [x] **Google Calendar** — retirado; no E2E OAuth
+7. [ ] **API Mallanet** — publicación real al directorio (hoy: flag + CTA)
+8. [ ] **Notificaciones** — email (o canal) al crear/cancelar turno
+9. [ ] **Confirmar turno** — flujo claro médico/recepción → `confirmed`
 
 ### Calidad / equipo
 
-10. **E2E de caminos críticos** — crear turno, rechazar solape, cancelar, reservar landing (con `E2E_*`)
-11. **Seed demo** — médico + landing + turnos de ejemplo para demos
+10. [x] **E2E de caminos críticos** — smoke siempre; agenda/landing/admin con `E2E_*`
+11. [x] **Seed demo** — `doctor@example.com` / `admin@example.com` + landing `dra-demo`
 
 Fuera de v1: ver §7.
 
@@ -274,6 +270,7 @@ Fuera de v1: ver §7.
 
 | Fecha | Cambio |
 | --- | --- |
+| 2026-07-21 | Wire-up: grilla semanal, slots públicos, seed demo, membership cancelled, E2E ampliados |
 | 2026-07-20 | Primera versión: visión, MVP, stack |
 | 2026-07-20 | Negocio Waira $100×100, Mallanet, landing+asistente, decisiones cerradas |
 | 2026-07-20 | Unificado con CONTEXT (un solo doc) |

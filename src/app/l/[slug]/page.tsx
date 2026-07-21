@@ -1,10 +1,36 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BookingForm } from "@/components/booking-form";
+import { BookingIsland } from "@/components/booking/booking-island";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: landing } = await supabase
+    .from("landings")
+    .select("headline, body, is_published")
+    .eq("slug", slug)
+    .eq("is_published", true)
+    .maybeSingle();
+
+  if (!landing) {
+    return { title: "Landing no encontrada · Waira" };
+  }
+
+  return {
+    title: `${landing.headline || slug} · Waira`,
+    description: landing.body?.slice(0, 160) || "Pedí tu turno online",
+    openGraph: {
+      title: landing.headline || slug,
+      description: landing.body?.slice(0, 160) || "Pedí tu turno online",
+      type: "website",
+    },
+  };
+}
 
 export default async function LandingPage({ params }: Props) {
   const { slug } = await params;
@@ -47,44 +73,53 @@ export default async function LandingPage({ params }: Props) {
     process.env.NEXT_PUBLIC_MALLANET_DONATION_URL ||
     "#";
 
+  // DECISION: block booking when membership inactive to enforce paid model
   const canBook = membership?.status === "active";
+  const doctorName = resource?.display_name || landing.headline || "Médico";
 
   return (
-    <article className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+    <article className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:gap-12">
       <div className="space-y-5">
-        <p className="text-sm font-medium uppercase tracking-[0.18em] text-stone-500">
+        <p className="text-sm text-teal-800/75">
           {directory?.specialty || "Consulta médica"}
           {directory?.zone ? ` · ${directory.zone}` : ""}
         </p>
-        <h1 className="font-[family-name:var(--font-source-serif)] text-4xl leading-tight text-stone-900">
-          {landing.headline || resource?.display_name || "Médico"}
+        <h1 className="min-w-0 break-words font-[family-name:var(--font-display)] text-4xl font-semibold tracking-tight leading-[1.12] text-teal-950">
+          {landing.headline || doctorName}
         </h1>
-        <p className="max-w-xl text-base leading-relaxed text-stone-700">
+        <p className="max-w-xl text-base leading-relaxed text-teal-900/75">
           {landing.body || directory?.bio_short || "Pedí tu turno desde aquí."}
         </p>
         {landing.show_donation_cta ? (
-          <p className="text-sm text-stone-600">
-            ¿Querés apoyar a la comunidad?{" "}
+          <p className="text-sm text-teal-900/70">
+            ¿Querés donar a Mallanet?{" "}
             <a
               href={donationUrl}
-              className="font-medium text-stone-900 underline"
+              className="font-medium text-teal-800 underline underline-offset-2 hover:text-teal-950"
               target="_blank"
               rel="noreferrer"
             >
-              Donar a Mallanet
-            </a>{" "}
-            (opcional, no bloquea la reserva).
+              Ir a donar
+            </a>
+            . No hace falta para reservar.
           </p>
         ) : null}
       </div>
 
-      <div>
+      <div className="lg:sticky lg:top-6">
         {canBook ? (
-          <BookingForm slug={slug} />
+          <BookingIsland
+            slug={slug}
+            doctorName={doctorName}
+            ctaLabel={landing.cta_label || "Pedir turno"}
+          />
         ) : (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
-            Las reservas online están pausadas (membresía no activa). Contactá al
-            consultorio por otro canal.
+          <div
+            className="rounded-[var(--radius-panel)] border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950"
+            role="status"
+          >
+            Las reservas online están pausadas porque la membresía no está
+            activa. Escribile al consultorio por otro medio.
           </div>
         )}
       </div>
