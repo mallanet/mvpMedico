@@ -18,8 +18,8 @@
 ## Fase 3 — Verificación
 
 - [x] T7. Criterios de aceptación del spec en verde
-- [ ] T8. PR `chore/agent-collab-setup`; labels; branch protection en `main`
+- [x] T8. PR abierto: https://github.com/mallanet/mvpMedico/pull/2 (desde fork; labels + branch protection requieren admin del org — ver CONTRIBUTING)
 
 ## Notas
 
-T8 se completa al abrir/mergear el PR en GitHub.
+Merge + labels + branch protection: maintainer con write/admin en `mallanet/mvpMedico`.

@@ -69,3 +69,13 @@ Un owner por `specs/NNN-*`. Si el Issue ya tiene assignee, no lo pisés.
 - Código/commits/nombres: inglés
 - PRs chicos, una preocupación, con el *por qué*
 - Al menos 1 approve de otro del trio antes de `main`
+
+## Para maintainers del org (`mallanet`)
+
+Quien tenga **push/admin** en `mallanet/mvpMedico` debe aplicar (una vez):
+
+1. Labels: `feature`, `chore`, `product`, `blocked`
+2. Branch protection en `main`: require 1 approving review; no force-push
+3. Write access al trio (kleosr, christianmock, jseramn) para push directo de ramas
+
+Sin eso, los colaboradores abren PR desde fork (como este setup).
