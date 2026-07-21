@@ -229,16 +229,44 @@ Weekly: avance hacia 100 membresías y una mejora landing→turno. Cada feature 
 
 ## 12. Próximos pasos técnicos
 
-1. Scaffold Next.js + TypeScript + Tailwind
-2. Proyecto Supabase + migrations (tablas §8)
-3. Auth (magic link o email/password)
-4. RLS + anti-solape + E2E
-5. Calendario semanal mínimo
-6. Landing pública por slug + formulario de reserva
-7. Google Calendar OAuth (busy + block)
-8. `memberships` + flag publicar a Mallanet (al inicio puede ser manual)
-9. CTA donación Mallanet en la landing
-10. README de setup local
+1. [x] Scaffold Next.js + TypeScript + Tailwind
+2. [x] Proyecto Supabase + migrations (tablas §8)
+3. [x] Auth (email/password)
+4. [x] RLS + anti-solape (+ smoke E2E)
+5. [ ] Calendario semanal visual (hoy: lista de turnos)
+6. [x] Landing pública por slug + formulario de reserva
+7. [x] Google Calendar OAuth (busy + block) — falta probar con credenciales reales
+8. [x] `memberships` + flag publicar a Mallanet (manual / admin)
+9. [x] CTA donación Mallanet en la landing
+10. [x] README de setup local
+
+---
+
+## 13. Pendiente (post-scaffold)
+
+Orden sugerido de trabajo. El scaffold de §6 está en el repo; esto es lo que falta para operar y vender.
+
+### Crítico
+
+1. **Disponibilidad + slots** — horario de atención y turnos bookables (hoy se elige cualquier hora a mano)
+2. **Calendario semanal visual** — grilla usable para médico/recepción
+3. **Rol recepción** — invitar/usar recepción; signup hoy solo bootstrapéa médico
+4. **Cobro membresía** — Stripe u equivalente LatAm (hoy stub `active`/`paused`)
+5. **Deploy cloud** — Vercel + Supabase cloud (URL compartible)
+
+### Integraciones / producto
+
+6. **Google Calendar E2E** — OAuth real + sync FreeBusy en un calendario de prueba
+7. **API Mallanet** — publicación real al directorio (hoy: flag + CTA)
+8. **Notificaciones** — email (o canal) al crear/cancelar turno
+9. **Confirmar turno** — flujo claro médico/recepción → `confirmed`
+
+### Calidad / equipo
+
+10. **E2E de caminos críticos** — crear turno, rechazar solape, cancelar, reservar landing (con `E2E_*`)
+11. **Seed demo** — médico + landing + turnos de ejemplo para demos
+
+Fuera de v1: ver §7.
 
 ---
 
@@ -250,3 +278,4 @@ Weekly: avance hacia 100 membresías y una mejora landing→turno. Cada feature 
 | 2026-07-20 | Negocio Waira $100×100, Mallanet, landing+asistente, decisiones cerradas |
 | 2026-07-20 | Unificado con CONTEXT (un solo doc) |
 | 2026-07-20 | Scaffold Next.js + schema Supabase + agenda/landing/Google/memberships |
+| 2026-07-20 | §13 pendientes post-scaffold (slots, recepción, deploy, pagos, E2E) |
