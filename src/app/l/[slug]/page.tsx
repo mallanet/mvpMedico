@@ -1,10 +1,36 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BookingForm } from "@/components/booking-form";
+import { BookingIsland } from "@/components/booking/booking-island";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: landing } = await supabase
+    .from("landings")
+    .select("headline, body, is_published")
+    .eq("slug", slug)
+    .eq("is_published", true)
+    .maybeSingle();
+
+  if (!landing) {
+    return { title: "Landing no encontrada · Waira" };
+  }
+
+  return {
+    title: `${landing.headline || slug} · Waira`,
+    description: landing.body?.slice(0, 160) || "Pedí tu turno online",
+    openGraph: {
+      title: landing.headline || slug,
+      description: landing.body?.slice(0, 160) || "Pedí tu turno online",
+      type: "website",
+    },
+  };
+}
 
 export default async function LandingPage({ params }: Props) {
   const { slug } = await params;
@@ -47,7 +73,9 @@ export default async function LandingPage({ params }: Props) {
     process.env.NEXT_PUBLIC_MALLANET_DONATION_URL ||
     "#";
 
+  // DECISION: block booking when membership inactive to enforce paid model
   const canBook = membership?.status === "active";
+  const doctorName = resource?.display_name || landing.headline || "Médico";
 
   return (
     <article className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
@@ -57,7 +85,7 @@ export default async function LandingPage({ params }: Props) {
           {directory?.zone ? ` · ${directory.zone}` : ""}
         </p>
         <h1 className="font-[family-name:var(--font-source-serif)] text-4xl leading-tight text-stone-900">
-          {landing.headline || resource?.display_name || "Médico"}
+          {landing.headline || doctorName}
         </h1>
         <p className="max-w-xl text-base leading-relaxed text-stone-700">
           {landing.body || directory?.bio_short || "Pedí tu turno desde aquí."}
@@ -80,7 +108,7 @@ export default async function LandingPage({ params }: Props) {
 
       <div>
         {canBook ? (
-          <BookingForm slug={slug} />
+          <BookingIsland slug={slug} doctorName={doctorName} />
         ) : (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
             Las reservas online están pausadas (membresía no activa). Contactá al

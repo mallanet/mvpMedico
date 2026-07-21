@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { updateOnboarding } from "@/lib/appointments";
 import type { DirectoryProfile, Landing, Profile } from "@/lib/types";
 
@@ -20,6 +20,16 @@ export function OnboardingForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [slug, setSlug] = useState(landing.slug);
+  const [copied, setCopied] = useState(false);
+
+  const publicUrl = useMemo(() => {
+    const base =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000");
+    return `${base}/l/${slug}`;
+  }, [slug]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -98,12 +108,28 @@ export function OnboardingForm({
         Slug de landing
         <input
           name="slug"
-          defaultValue={landing.slug}
+          value={slug}
+          onChange={(e) => setSlug(e.target.value)}
           required
           pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
           className="rounded-lg border px-3 py-2"
         />
       </label>
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-teal-900/10 bg-teal-50/40 px-3 py-2 text-sm">
+        <span className="text-teal-900/70">URL pública:</span>
+        <code className="text-teal-950">{publicUrl}</code>
+        <button
+          type="button"
+          className="rounded-md border border-teal-900/15 bg-white px-2 py-1 text-xs hover:bg-teal-50"
+          onClick={async () => {
+            await navigator.clipboard.writeText(publicUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }}
+        >
+          {copied ? "Copiado" : "Copiar"}
+        </button>
+      </div>
       <label className="flex flex-col gap-1 text-sm">
         Headline
         <input
