@@ -91,18 +91,20 @@ Permisos finos y multi-sede quedan fuera de v1.
 
 ## 6. MVP v1 — entra
 
-- [ ] Auth (Supabase): médico + recepción
-- [ ] Onboarding: cuenta → perfil → conectar calendario → publicar landing
-- [ ] Perfil de directorio + flag “publicado en Mallanet”
-- [ ] Landing por médico (especialidad, bio corta, CTA de reserva/contacto)
-- [ ] Calendario por médico (`resource`)
-- [ ] CRUD de turnos
-- [ ] Anti-solapamiento
-- [ ] Formulario/asistente web que crea el turno (mensajería después, si hace falta)
-- [ ] Datos mínimos del paciente visibles junto al turno
-- [ ] Google Calendar: importar ocupado y bloquear huecos (sin sync bidireccional completo)
-- [ ] Vista de conflictos si algo externo choca
-- [ ] CTA opcional de donación a Mallanet en la landing (no bloquea la reserva)
+- [x] Auth (Supabase): médico + recepción
+- [x] Onboarding: cuenta → perfil → conectar calendario → publicar landing
+- [x] Perfil de directorio + flag “publicado en Mallanet”
+- [x] Landing por médico (especialidad, bio corta, CTA de reserva/contacto)
+- [x] Calendario por médico (`resource`)
+- [x] CRUD de turnos
+- [x] Anti-solapamiento
+- [x] Formulario/asistente web que crea el turno (mensajería después, si hace falta)
+- [x] Datos mínimos del paciente visibles junto al turno
+- [x] Google Calendar: importar ocupado y bloquear huecos (sin sync bidireccional completo)
+- [x] Vista de conflictos si algo externo choca
+- [x] CTA opcional de donación a Mallanet en la landing (no bloquea la reserva)
+
+> Implementación inicial en el repo (2026-07-20). Activar membresía + Supabase local/cloud y credenciales Google para probar end-to-end.
 
 Éxito de producto: el médico con membresía es encontrable, tiene landing viva, y deja de mantener dos agendas a mano para el flujo principal de turnos.
 
@@ -245,3 +247,4 @@ Weekly: avance hacia 100 membresías y una mejora landing→turno. Cada feature 
 | 2026-07-20 | Primera versión: visión, MVP, stack |
 | 2026-07-20 | Negocio Waira $100×100, Mallanet, landing+asistente, decisiones cerradas |
 | 2026-07-20 | Unificado con CONTEXT (un solo doc) |
+| 2026-07-20 | Scaffold Next.js + schema Supabase + agenda/landing/Google/memberships |
