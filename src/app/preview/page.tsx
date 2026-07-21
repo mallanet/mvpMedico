@@ -4,6 +4,7 @@ import { BookingIsland } from "@/components/booking/booking-island";
 import { ClinicCard } from "@/components/directory/clinic-card";
 import { ClinicCardMedia } from "@/components/directory/clinic-card-media";
 import { ClinicPicker } from "@/components/preview/clinic-picker";
+import { SandboxDoctorBanner } from "@/components/preview/sandbox-doctor-banner";
 import {
   ecuadorClinicsBundle,
   getEcuadorClinic,
@@ -92,7 +93,7 @@ export default async function PreviewProfilePage({ searchParams }: Props) {
                     <ClinicCardMedia clinic={selected} compact />
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
-                    <p className="text-xs font-medium uppercase tracking-[0.14em] text-[color:var(--brand-forest)]/70">
+                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-[color:var(--brand-forest)]/70">
                       {selected.type === "hospital" ? "Hospital" : "Clínica"} ·{" "}
                       {selected.city}
                     </p>
@@ -104,6 +105,8 @@ export default async function PreviewProfilePage({ searchParams }: Props) {
                     </p>
                   </div>
                 </div>
+
+                <SandboxDoctorBanner />
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                   <a
@@ -133,7 +136,8 @@ export default async function PreviewProfilePage({ searchParams }: Props) {
                 <BookingIsland
                   key={selected.id}
                   slug={`sandbox-${selected.id}`}
-                  doctorName={selected.name}
+                  doctorName="Dra. Valentina Reyes"
+                  specialty="Cardiología"
                   ctaLabel="Pedir turno"
                   sandboxClinicId={selected.id}
                   embedded

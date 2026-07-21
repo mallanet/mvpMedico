@@ -4,6 +4,7 @@ import {
   filterAvailableSlots,
 } from "@/lib/slots";
 import { OVERLAP_MESSAGE, type Appointment, type TimeSlot } from "@/lib/types";
+import { joinPatientName } from "@/lib/patient-name";
 
 const STORAGE_V1 = "waira-preview-sandbox-v1";
 const STORAGE_V2 = "waira-preview-sandbox-v2";
@@ -12,7 +13,7 @@ const STORAGE_V3 = "waira-preview-sandbox-v3";
 export const SANDBOX_DOCTOR_ID = "sandbox-doctor";
 
 /** Mon=1 … Sat=6 */
-export type PresenceWeekday = 1 | 2 | 3 | 4 | 5 | 6;
+export type PresenceWeekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 export type PresenceWindow = {
   weekday: PresenceWeekday;
@@ -28,9 +29,16 @@ export type Affiliation = {
 export type DoctorSandbox = {
   id: string;
   displayName: string;
+  specialty: string;
+  zone: string;
+  bioShort: string;
+  /** Bumped when default mock appointments / profile change. */
+  seedVersion: number;
   affiliations: Affiliation[];
   appointmentsByClinic: Record<string, Appointment[]>;
 };
+
+export const SANDBOX_SEED_VERSION = 3;
 
 export type SandboxAppointment = Appointment & { clinicId: string };
 
@@ -38,7 +46,7 @@ export type SandboxResult =
   | { ok: true; id?: string }
   | { ok: false; error: string };
 
-const DEFAULT_WINDOWS: PresenceWindow[] = [1, 2, 3, 4, 5, 6].map(
+const DEFAULT_WINDOWS: PresenceWindow[] = [0, 1, 2, 3, 4, 5, 6].map(
   (weekday) => ({
     weekday: weekday as PresenceWeekday,
     start: "08:00",
@@ -52,15 +60,152 @@ const DEFAULT_CLINIC_IDS = [
   "valles-cumbaya",
 ];
 
+function localSlotIso(daysFromToday: number, hour: number, minute = 0): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysFromToday);
+  d.setHours(hour, minute, 0, 0);
+  return d.toISOString();
+}
+
+function mockAppointment(
+  clinicId: string,
+  daysFromToday: number,
+  hour: number,
+  minute: number,
+  patient: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email?: string;
+  },
+  notes: string | null,
+  status: Appointment["status"] = "scheduled",
+): Appointment {
+  const id = `seed-${clinicId}-d${daysFromToday}-${hour}${String(minute).padStart(2, "0")}`;
+  const starts_at = localSlotIso(daysFromToday, hour, minute);
+  const ends_at = new Date(
+    new Date(starts_at).getTime() + 30 * 60 * 1000,
+  ).toISOString();
+  return {
+    id,
+    resource_id: `sandbox-${clinicId}`,
+    patient_id: null,
+    starts_at,
+    ends_at,
+    status,
+    notes,
+    patients_min: {
+      id: `p-${id}`,
+      full_name: joinPatientName(patient.firstName, patient.lastName),
+      phone: patient.phone,
+      email: patient.email ?? null,
+    },
+  };
+}
+
+/** Cross-clinic demo load: no overlaps, presence 08–20. */
+export function buildMockAppointments(): Record<string, Appointment[]> {
+  return {
+    "metropolitano-quito": [
+      mockAppointment(
+        "metropolitano-quito",
+        1,
+        9,
+        0,
+        {
+          firstName: "Ana",
+          lastName: "Torres",
+          phone: "0991112233",
+          email: "ana.torres@example.com",
+        },
+        "Control anual",
+      ),
+      mockAppointment(
+        "metropolitano-quito",
+        2,
+        11,
+        30,
+        {
+          firstName: "Carlos",
+          lastName: "Mendoza",
+          phone: "0987654321",
+        },
+        "Resultados de laboratorio",
+        "confirmed",
+      ),
+    ],
+    "vozandes-quito": [
+      mockAppointment(
+        "vozandes-quito",
+        1,
+        15,
+        0,
+        {
+          firstName: "Lucía",
+          lastName: "Vargas",
+          phone: "0976543210",
+          email: "lucia.vargas@example.com",
+        },
+        "Primera consulta",
+      ),
+      mockAppointment(
+        "vozandes-quito",
+        3,
+        10,
+        0,
+        {
+          firstName: "Diego",
+          lastName: "Salazar",
+          phone: "0965432109",
+        },
+        null,
+      ),
+    ],
+    "valles-cumbaya": [
+      mockAppointment(
+        "valles-cumbaya",
+        2,
+        16,
+        0,
+        {
+          firstName: "María",
+          lastName: "Gómez",
+          phone: "0954321098",
+          email: "maria.gomez@example.com",
+        },
+        "Seguimiento",
+      ),
+      mockAppointment(
+        "valles-cumbaya",
+        4,
+        9,
+        30,
+        {
+          firstName: "Pedro",
+          lastName: "Jiménez",
+          phone: "0943210987",
+        },
+        "Chequeo",
+        "confirmed",
+      ),
+    ],
+  };
+}
+
 function defaultDoctor(): DoctorSandbox {
   return {
     id: SANDBOX_DOCTOR_ID,
-    displayName: "Dra. Demo Waira",
+    displayName: "Dra. Valentina Reyes",
+    specialty: "Cardiología",
+    zone: "Quito · multi-sede",
+    bioShort:
+      "Cardiología en varias sedes con agenda única anti-solape. Pedí turno eligiendo clínica y horario.",
+    seedVersion: SANDBOX_SEED_VERSION,
     affiliations: DEFAULT_CLINIC_IDS.map((clinicId) => ({
       clinicId,
       windows: DEFAULT_WINDOWS.map((w) => ({ ...w })),
     })),
-    appointmentsByClinic: {},
+    appointmentsByClinic: buildMockAppointments(),
   };
 }
 
@@ -106,28 +251,129 @@ function migrateFromV1(): DoctorSandbox | null {
   return doctor;
 }
 
+function ensureFullWeekWindows(affiliations: Affiliation[]): {
+  affiliations: Affiliation[];
+  changed: boolean;
+} {
+  let changed = false;
+  const next = affiliations.map((a) => {
+    const have = new Set(a.windows.map((w) => w.weekday));
+    const missing = DEFAULT_WINDOWS.filter((w) => !have.has(w.weekday));
+    if (missing.length === 0) return a;
+    changed = true;
+    return { ...a, windows: [...a.windows, ...missing.map((w) => ({ ...w }))] };
+  });
+  return { affiliations: next, changed };
+}
+
+function hasAnyAppointments(
+  appointmentsByClinic: Record<string, Appointment[]>,
+): boolean {
+  return Object.values(appointmentsByClinic).some((list) =>
+    (list ?? []).some((a) => a.status !== "cancelled"),
+  );
+}
+
+function mergeMissingMockAppointments(
+  current: Record<string, Appointment[]>,
+): { next: Record<string, Appointment[]>; changed: boolean } {
+  const mock = buildMockAppointments();
+  let changed = false;
+  const next: Record<string, Appointment[]> = { ...current };
+  for (const [clinicId, list] of Object.entries(mock)) {
+    if ((next[clinicId] ?? []).length === 0) {
+      next[clinicId] = list;
+      changed = true;
+    }
+  }
+  return { next, changed };
+}
+
+function normalizeDoctor(parsed: Partial<DoctorSandbox>): {
+  doctor: DoctorSandbox;
+  changed: boolean;
+} {
+  const defaults = defaultDoctor();
+  let appointmentsByClinic =
+    parsed.appointmentsByClinic ?? defaults.appointmentsByClinic;
+  const seedVersion = parsed.seedVersion ?? 0;
+  let seedChanged = false;
+
+  if (seedVersion < SANDBOX_SEED_VERSION) {
+    if (!hasAnyAppointments(appointmentsByClinic)) {
+      appointmentsByClinic = defaults.appointmentsByClinic;
+      seedChanged = true;
+    } else {
+      const merged = mergeMissingMockAppointments(appointmentsByClinic);
+      appointmentsByClinic = merged.next;
+      seedChanged = merged.changed || seedVersion < SANDBOX_SEED_VERSION;
+    }
+  }
+
+  const affiliationsRaw =
+    Array.isArray(parsed.affiliations) && parsed.affiliations.length > 0
+      ? parsed.affiliations
+      : defaults.affiliations;
+  const ensured = ensureFullWeekWindows(affiliationsRaw);
+
+  const refreshIdentity =
+    seedVersion < 3 &&
+    (!parsed.displayName ||
+      parsed.displayName.includes("Demo Waira") ||
+      parsed.specialty === "Medicina familiar");
+
+  const doctor: DoctorSandbox = {
+    ...defaults,
+    ...parsed,
+    id: SANDBOX_DOCTOR_ID,
+    displayName: refreshIdentity
+      ? defaults.displayName
+      : parsed.displayName?.trim() || defaults.displayName,
+    specialty: refreshIdentity
+      ? defaults.specialty
+      : parsed.specialty?.trim() || defaults.specialty,
+    zone: refreshIdentity
+      ? defaults.zone
+      : parsed.zone?.trim() || defaults.zone,
+    bioShort: refreshIdentity
+      ? defaults.bioShort
+      : parsed.bioShort?.trim() || defaults.bioShort,
+    seedVersion: Math.max(seedVersion, SANDBOX_SEED_VERSION),
+    affiliations: ensured.affiliations,
+    appointmentsByClinic,
+  };
+
+  const changed =
+    ensured.changed ||
+    seedChanged ||
+    refreshIdentity ||
+    seedVersion < SANDBOX_SEED_VERSION ||
+    !parsed.specialty ||
+    !parsed.zone ||
+    !parsed.bioShort;
+
+  return { doctor, changed };
+}
+
 function readDoctor(): DoctorSandbox {
   if (typeof window === "undefined") return emptyDoctor();
   try {
     const rawV3 = window.localStorage.getItem(STORAGE_V3);
     if (rawV3) {
-      const parsed = JSON.parse(rawV3) as DoctorSandbox;
+      const parsed = JSON.parse(rawV3) as Partial<DoctorSandbox>;
       if (parsed?.id && Array.isArray(parsed.affiliations)) {
-        return {
-          ...defaultDoctor(),
-          ...parsed,
-          appointmentsByClinic: parsed.appointmentsByClinic ?? {},
-        };
+        const { doctor, changed } = normalizeDoctor(parsed);
+        if (changed) writeDoctor(doctor);
+        return doctor;
       }
     }
 
     // v2 → v3: keep appointments/affiliations, refresh presence to full demo day
     const rawV2 = window.localStorage.getItem(STORAGE_V2);
     if (rawV2) {
-      const parsed = JSON.parse(rawV2) as DoctorSandbox;
+      const parsed = JSON.parse(rawV2) as Partial<DoctorSandbox>;
       if (parsed?.id && Array.isArray(parsed.affiliations)) {
-        const upgraded: DoctorSandbox = {
-          ...defaultDoctor(),
+        const { doctor } = normalizeDoctor({
           ...parsed,
           affiliations: (parsed.affiliations.length
             ? parsed.affiliations
@@ -136,17 +382,17 @@ function readDoctor(): DoctorSandbox {
             clinicId: a.clinicId,
             windows: DEFAULT_WINDOWS.map((w) => ({ ...w })),
           })),
-          appointmentsByClinic: parsed.appointmentsByClinic ?? {},
-        };
-        writeDoctor(upgraded);
-        return upgraded;
+        });
+        writeDoctor(doctor);
+        return doctor;
       }
     }
 
     const migrated = migrateFromV1();
     if (migrated) {
-      writeDoctor(migrated);
-      return migrated;
+      const { doctor } = normalizeDoctor(migrated);
+      writeDoctor(doctor);
+      return doctor;
     }
   } catch {
     /* fall through */
@@ -166,7 +412,12 @@ export function getSandboxDoctor(): DoctorSandbox {
 }
 
 export function saveSandboxDoctor(
-  patch: Partial<Pick<DoctorSandbox, "displayName" | "affiliations">>,
+  patch: Partial<
+    Pick<
+      DoctorSandbox,
+      "displayName" | "specialty" | "zone" | "bioShort" | "affiliations"
+    >
+  >,
 ): DoctorSandbox {
   const current = readDoctor();
   const next: DoctorSandbox = {
@@ -240,7 +491,7 @@ function findGlobalOverlap(
   return hit ? { clinicId: hit.clinicId } : null;
 }
 
-/** JS Date.getDay(): 0=Sun … 6=Sat → presence weekday 1–6 or null */
+/** JS Date.getDay(): 0=Sun … 6=Sat */
 export function toPresenceWeekday(day: Date): PresenceWeekday | null {
   const d = day.getDay();
   if (!BOOKABLE_WEEKDAYS.has(d)) return null;

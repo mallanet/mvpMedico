@@ -34,20 +34,24 @@ test.describe("smoke", () => {
   test("doctor panel and cross-clinic overlap", async ({ page }) => {
     await page.goto("/preview/doctor");
     await expect(
-      page.getByRole("heading", { name: /panel doctor/i }),
+      page.getByRole("heading", { name: /presencia entre clínicas/i }),
     ).toBeVisible();
     await expect(page.getByLabel(/nombre del doctor/i)).toBeVisible();
 
     const seedLabel = await page.evaluate(() => {
       const key = "waira-preview-sandbox-v3";
-      const windows = [1, 2, 3, 4, 5, 6].map((weekday) => ({
+      const windows = [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
         weekday,
         start: "08:00",
         end: "20:00",
       }));
       const doctor = {
         id: "sandbox-doctor",
-        displayName: "Dra. Demo Waira",
+        displayName: "Dra. Valentina Reyes",
+        specialty: "Cardiología",
+        zone: "Quito · multi-sede",
+        bioShort: "Demo",
+        seedVersion: 3,
         affiliations: [
           { clinicId: "metropolitano-quito", windows },
           { clinicId: "vozandes-quito", windows },
@@ -57,12 +61,10 @@ test.describe("smoke", () => {
 
       const day = new Date();
       day.setHours(12, 0, 0, 0);
-      while (day.getDay() === 0) day.setDate(day.getDate() + 1);
       let starts = new Date(day);
       starts.setHours(16, 0, 0, 0);
       if (starts.getTime() <= Date.now()) {
         day.setDate(day.getDate() + 1);
-        while (day.getDay() === 0) day.setDate(day.getDate() + 1);
         starts = new Date(day);
         starts.setHours(16, 0, 0, 0);
       }
@@ -118,6 +120,9 @@ test.describe("smoke", () => {
       page.getByRole("heading", { level: 1, name: /vozandes/i }),
     ).toBeVisible();
     await expect(page.getByRole("form", { name: /pedir turno/i })).toBeVisible();
+    await expect(page.getByText(/cardiolog/i).first()).toBeVisible();
+    await expect(page.getByLabel(/^nombre$/i)).toBeVisible();
+    await expect(page.getByLabel(/^apellido$/i)).toBeVisible();
     await expect(
       page.getByRole("button", { name: /^\d{2}:\d{2}$/ }).first(),
     ).toBeVisible({ timeout: 10_000 });
@@ -137,5 +142,35 @@ test.describe("smoke", () => {
     ).toBeVisible();
     await expect(page.getByLabel(/email/i)).toBeVisible();
     await expect(page.getByLabel(/contraseña/i)).toBeVisible();
+  });
+
+  test("demo mode login and landing book", async ({ page }) => {
+    test.skip(
+      process.env.NEXT_PUBLIC_SUPABASE_URL !== "mock" &&
+        Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+      "Requires demo mode (NEXT_PUBLIC_SUPABASE_URL=mock)",
+    );
+
+    await page.goto("/login");
+    await page.getByLabel(/email/i).fill("doctor@example.com");
+    await page.getByLabel(/contraseña/i).fill("password123");
+    await page.getByRole("button", { name: /entrar/i }).click();
+    await expect(page).toHaveURL(/\/calendar/);
+    await expect(page.getByText(/valentina|reyes|demo/i).first()).toBeVisible();
+
+    await page.goto("/l/dra-reyes");
+    await expect(
+      page.getByRole("heading", { name: /valentina|reyes|agenda/i }),
+    ).toBeVisible();
+    await expect(page.getByRole("form", { name: /pedir turno/i })).toBeVisible();
+    const slot = page.getByRole("button", { name: /^\d{2}:\d{2}$/ }).first();
+    await expect(slot).toBeVisible({ timeout: 10_000 });
+    await slot.click();
+    await page.getByLabel(/^nombre$/i).fill("Paciente");
+    await page.getByLabel(/^apellido$/i).fill("Demo");
+    await page.getByLabel(/teléfono/i).fill("+593990000000");
+    await page.getByRole("button", { name: /confirmar turno/i }).click();
+    await expect(page.getByText(/turno solicitado/i)).toBeVisible();
+    await expect(page.getByText(/WRA-/i)).toBeVisible();
   });
 });

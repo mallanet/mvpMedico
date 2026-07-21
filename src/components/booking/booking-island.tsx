@@ -4,12 +4,14 @@ import { BookingWidget } from "@/components/booking/booking-widget";
 export function BookingIsland({
   slug,
   doctorName,
+  specialty,
   ctaLabel,
   sandboxClinicId,
   embedded,
 }: {
   slug: string;
   doctorName: string;
+  specialty?: string;
   ctaLabel?: string;
   sandboxClinicId?: string;
   embedded?: boolean;
@@ -19,6 +21,7 @@ export function BookingIsland({
       <BookingWidget
         slug={slug}
         doctorName={doctorName}
+        specialty={specialty}
         ctaLabel={ctaLabel}
         sandboxClinicId={sandboxClinicId}
         embedded={embedded}

@@ -9,8 +9,18 @@ import {
   filterAvailableSlots,
 } from "@/lib/slots";
 import { OVERLAP_MESSAGE, type MembershipStatus, type TimeSlot } from "@/lib/types";
+import { isDemoMode } from "@/lib/mock/mode";
+import {
+  demoBookFromLanding,
+  demoCancelAppointment,
+  demoCreateAppointment,
+  demoListAvailableSlots,
+  demoMoveAppointment,
+  demoSetMembershipStatus,
+  demoUpdateOnboarding,
+} from "@/lib/mock/appointments";
 
-export type ActionResult = { ok: true; id?: string } | { ok: false; error: string };
+export type ActionResult = { ok: true; id?: string; code?: string } | { ok: false; error: string };
 
 function isExclusionViolation(error: PostgrestError): boolean {
   // DECISION: check Postgres code 23P01 first; fall back to message for PostgREST variants.
@@ -37,6 +47,8 @@ export async function createAppointment(input: {
   patientEmail?: string;
   notes?: string;
 }): Promise<ActionResult> {
+  if (isDemoMode()) return demoCreateAppointment(input);
+
   const ctx = await getClinicContext();
   if (!ctx?.resource.id) return { ok: false, error: "Sesión no válida." };
   if (!hasActiveMembership(ctx)) return membershipBlocked();
@@ -81,6 +93,8 @@ export async function createAppointment(input: {
 }
 
 export async function cancelAppointment(appointmentId: string): Promise<ActionResult> {
+  if (isDemoMode()) return demoCancelAppointment(appointmentId);
+
   const ctx = await getClinicContext();
   if (!ctx?.resource.id) return { ok: false, error: "Sesión no válida." };
   if (!hasActiveMembership(ctx)) return membershipBlocked();
@@ -102,6 +116,8 @@ export async function moveAppointment(input: {
   startsAt: string;
   endsAt: string;
 }): Promise<ActionResult> {
+  if (isDemoMode()) return demoMoveAppointment(input);
+
   const ctx = await getClinicContext();
   if (!ctx?.resource.id) return { ok: false, error: "Sesión no válida." };
   if (!hasActiveMembership(ctx)) return membershipBlocked();
@@ -146,6 +162,8 @@ export async function bookFromLanding(input: {
   patientEmail?: string;
   notes?: string;
 }): Promise<ActionResult> {
+  if (isDemoMode()) return demoBookFromLanding(input);
+
   // DECISION: block booking when membership inactive to enforce paid model
   const supabase = await createClient();
 
@@ -218,6 +236,8 @@ export async function listAvailableSlots(input: {
   slug: string;
   date: string;
 }): Promise<{ ok: true; slots: TimeSlot[] } | { ok: false; error: string }> {
+  if (isDemoMode()) return demoListAvailableSlots(input);
+
   const supabase = await createClient();
   const { data: landing } = await supabase
     .from("landings")
@@ -262,6 +282,8 @@ export async function updateOnboarding(input: {
   publishMallanet: boolean;
   showDonationCta: boolean;
 }): Promise<ActionResult> {
+  if (isDemoMode()) return demoUpdateOnboarding(input);
+
   const ctx = await getClinicContext();
   if (!ctx?.resource.id || !ctx.landing || !ctx.directory) {
     return { ok: false, error: "Sesión no válida." };
@@ -327,6 +349,8 @@ export async function setMembershipStatus(
   clinicId: string,
   status: MembershipStatus,
 ): Promise<ActionResult> {
+  if (isDemoMode()) return demoSetMembershipStatus(clinicId, status);
+
   const ctx = await getClinicContext();
   if (!ctx || ctx.profile.role !== "admin_waira") {
     return { ok: false, error: "Solo Admin Waira puede cambiar membresías." };

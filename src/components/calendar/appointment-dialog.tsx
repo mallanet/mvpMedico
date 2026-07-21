@@ -5,6 +5,7 @@ import { es } from "date-fns/locale";
 import { FormEvent, useState } from "react";
 import { SLOT_MINUTES } from "@/lib/slots";
 import { addMinutes } from "date-fns";
+import { joinPatientName } from "@/lib/patient-name";
 
 type Props = {
   mode: "create" | "edit";
@@ -50,7 +51,10 @@ export function AppointmentDialog({
 
     if (mode === "create") {
       onCreate({
-        patientName: String(form.get("patientName")),
+        patientName: joinPatientName(
+          String(form.get("patientFirstName") ?? ""),
+          String(form.get("patientLastName") ?? ""),
+        ),
         patientPhone: String(form.get("patientPhone")),
         notes: String(form.get("notes") || "") || undefined,
       });
@@ -110,12 +114,21 @@ export function AppointmentDialog({
         {mode === "create" ? (
           <>
             <label className="flex flex-col gap-1 text-sm">
-              Paciente
+              Nombre
               <input
-                name="patientName"
+                name="patientFirstName"
                 required
+                autoComplete="given-name"
                 className="rounded-lg border px-3 py-2"
-                defaultValue={patientName}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              Apellido
+              <input
+                name="patientLastName"
+                required
+                autoComplete="family-name"
+                className="rounded-lg border px-3 py-2"
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">

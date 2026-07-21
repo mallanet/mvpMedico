@@ -55,7 +55,7 @@ export function MasterCalendar({ clinics }: { clinics: EcuadorClinic[] }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-[color:var(--foreground)]/70">
-          {doctor.displayName} ·{" "}
+          {doctor.displayName} · {doctor.specialty} ·{" "}
           {appointments.length === 1
             ? "1 turno activo"
             : `${appointments.length} turnos activos`}

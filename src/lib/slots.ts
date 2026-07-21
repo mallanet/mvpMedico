@@ -13,8 +13,8 @@ import type { TimeSlot } from "@/lib/types";
 export const SLOT_MINUTES = 30;
 export const DAY_START_HOUR = 8;
 export const DAY_END_HOUR = 20;
-/** Mon=1 … Sat=6; Sunday excluded. */
-export const BOOKABLE_WEEKDAYS = new Set([1, 2, 3, 4, 5, 6]);
+/** Sun=0 … Sat=6 */
+export const BOOKABLE_WEEKDAYS = new Set([0, 1, 2, 3, 4, 5, 6]);
 
 type BusyRange = { starts_at: string; ends_at: string };
 

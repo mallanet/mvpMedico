@@ -23,6 +23,9 @@ export default function ClinicasPage() {
         <p className="text-sm leading-relaxed text-[color:var(--foreground)]/70">
           {ecuadorClinicsBundle.meta.note}
         </p>
+        <p className="rounded-[var(--radius-control)] border border-teal-900/10 bg-[color:var(--brand-foam)]/50 px-3 py-2 text-sm text-teal-950">
+          Directorio demostrativo. No son tenants reales de Waira.
+        </p>
         <p className="text-xs text-[color:var(--foreground)]/55">
           Fuentes:{" "}
           {ecuadorClinicsBundle.meta.sources.slice(0, 4).map((url, i) => (

@@ -105,7 +105,7 @@ export function CalendarGrid({
   }, [weekOffset]);
 
   const days = useMemo(
-    () => Array.from({ length: 6 }, (_, i) => addDays(weekStart, i)),
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
     [weekStart],
   );
 

@@ -1,7 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import type { ClinicContext } from "@/lib/types";
+import { isDemoMode } from "@/lib/mock/mode";
+import { getDemoClinicContext } from "@/lib/mock/appointments";
 
 export async function getClinicContext(): Promise<ClinicContext | null> {
+  if (isDemoMode()) {
+    return getDemoClinicContext();
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

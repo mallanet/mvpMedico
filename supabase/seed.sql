@@ -164,17 +164,17 @@ begin
 
   update public.directory_profiles
   set
-    specialty = 'Clínica médica',
-    zone = 'CABA',
-    bio_short = 'Atención presencial con agenda anti-solape.',
+    specialty = 'Medicina familiar',
+    zone = 'Quito',
+    bio_short = 'Atención presencial con agenda anti-solape en varias sedes.',
     published_to_mallanet = true
   where resource_id = resource_id;
 
   update public.landings
   set
     slug = 'dra-demo',
-    headline = 'Agenda con la Dra. Demo',
-    body = 'Elegí un horario disponible y dejá tus datos. Te confirmamos el turno.',
+    headline = 'Agenda con la Dra. Demo Waira',
+    body = 'Medicina familiar. Elegí un horario disponible y dejá nombre, apellido y teléfono. Te confirmamos el turno.',
     is_published = true,
     show_donation_cta = true,
     donation_url = 'https://mallanet.example/donate'
@@ -182,13 +182,13 @@ begin
 
   insert into public.patients_min (full_name, phone, email)
   values
-    ('Paciente Uno', '+5491100000001', 'p1@example.com'),
-    ('Paciente Dos', '+5491100000002', null),
-    ('Paciente Tres', '+5491100000003', 'p3@example.com');
+    ('Ana Torres', '+593991112233', 'ana.torres@example.com'),
+    ('Carlos Mendoza', '+593987654321', null),
+    ('Lucía Vargas', '+593976543210', 'lucia.vargas@example.com');
 
-  select id into patient1 from public.patients_min where phone = '+5491100000001' limit 1;
-  select id into patient2 from public.patients_min where phone = '+5491100000002' limit 1;
-  select id into patient3 from public.patients_min where phone = '+5491100000003' limit 1;
+  select id into patient1 from public.patients_min where phone = '+593991112233' limit 1;
+  select id into patient2 from public.patients_min where phone = '+593987654321' limit 1;
+  select id into patient3 from public.patients_min where phone = '+593976543210' limit 1;
 
   -- Next Monday 10:00 local approx as UTC offsets — use date_trunc week + offsets
   week_start := date_trunc('week', now() at time zone 'America/Argentina/Buenos_Aires')

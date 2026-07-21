@@ -1,6 +1,8 @@
 import { PageHeader } from "@/components/page-header";
 import { setMembershipStatus } from "@/lib/appointments";
 import { getClinicContext } from "@/lib/clinic-context";
+import { isDemoMode } from "@/lib/mock/mode";
+import { listDemoMemberships } from "@/lib/mock/appointments";
 import { createClient } from "@/lib/supabase/server";
 import type { MembershipStatus } from "@/lib/types";
 
@@ -22,12 +24,23 @@ export default async function AdminMembershipsPage() {
         <PageHeader title="Membresías" />
         <p className="rounded-[var(--radius-panel)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
           Solo el rol <code className="font-medium">admin_waira</code> puede
-          activar membresías. Para desarrollo local:
+          activar membresías.
+          {isDemoMode() ? (
+            <>
+              {" "}
+              En demo entrá con <code>admin@example.com</code> /{" "}
+              <code>password123</code>.
+            </>
+          ) : (
+            <> Para desarrollo local:</>
+          )}
         </p>
-        <pre className="overflow-x-auto rounded-[var(--radius-panel)] bg-teal-950 p-4 text-xs leading-relaxed text-teal-50">
+        {!isDemoMode() ? (
+          <pre className="overflow-x-auto rounded-[var(--radius-panel)] bg-teal-950 p-4 text-xs leading-relaxed text-teal-50">
 {`update public.profiles set role = 'admin_waira' where id = '<tu-user-id>';
 -- o usá admin@example.com / password123 del seed`}
-        </pre>
+          </pre>
+        ) : null}
         {ctx?.membership ? (
           <p className="text-sm leading-relaxed text-teal-900/70">
             Tu clínica actual: membresía{" "}
@@ -49,12 +62,17 @@ export default async function AdminMembershipsPage() {
     clinics: { name?: string } | null;
   };
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("memberships")
-    .select("id, clinic_id, status, activated_at, clinics(name)")
-    .order("created_at", { ascending: false });
-  const rows = (data as Row[]) ?? [];
+  let rows: Row[] = [];
+  if (isDemoMode()) {
+    rows = await listDemoMemberships();
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("memberships")
+      .select("id, clinic_id, status, activated_at, clinics(name)")
+      .order("created_at", { ascending: false });
+    rows = (data as Row[]) ?? [];
+  }
 
   return (
     <div className="space-y-6">

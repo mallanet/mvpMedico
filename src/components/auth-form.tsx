@@ -3,6 +3,13 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { isDemoMode } from "@/lib/mock/mode";
+import { buildSeedDb } from "@/lib/mock/seed";
+import {
+  demoSessionFromCredentials,
+  setDemoSessionClient,
+} from "@/lib/mock/session-client";
+import { writeDemoDbClient } from "@/lib/mock/store-client";
 
 type Mode = "login" | "signup";
 
@@ -20,6 +27,25 @@ export function AuthForm({ mode }: { mode: Mode }) {
     const email = String(form.get("email") ?? "");
     const password = String(form.get("password") ?? "");
     const fullName = String(form.get("fullName") ?? "");
+
+    if (isDemoMode()) {
+      if (!password) {
+        setError("Ingresá una contraseña (cualquier valor en demo).");
+        setLoading(false);
+        return;
+      }
+      const session = demoSessionFromCredentials(email);
+      setDemoSessionClient(session);
+      // Ensure seed DB cookie exists for server reads after navigation
+      writeDemoDbClient(buildSeedDb());
+      if (mode === "signup" && fullName.trim()) {
+        // Keep session on Dra. Reyes clinic; name is cosmetic in demo signup
+        void fullName;
+      }
+      router.push(mode === "signup" ? "/onboarding" : "/calendar");
+      router.refresh();
+      return;
+    }
 
     const supabase = createClient();
 
@@ -75,6 +101,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
           required
           autoComplete="email"
           className="field"
+          placeholder={isDemoMode() ? "doctor@example.com" : undefined}
+          defaultValue={isDemoMode() ? "doctor@example.com" : undefined}
         />
       </label>
       <label className="flex flex-col gap-1.5 text-sm text-teal-950">
@@ -83,21 +111,25 @@ export function AuthForm({ mode }: { mode: Mode }) {
           name="password"
           type="password"
           required
-          minLength={6}
           autoComplete={mode === "login" ? "current-password" : "new-password"}
           className="field"
+          placeholder={isDemoMode() ? "password123" : undefined}
+          defaultValue={isDemoMode() ? "password123" : undefined}
         />
       </label>
+      {isDemoMode() ? (
+        <p className="text-xs text-teal-900/60">
+          Modo demo: cualquier credencial funciona. Probá{" "}
+          <code>doctor@example.com</code> o <code>admin@example.com</code>.
+        </p>
+      ) : null}
       {error ? (
-        <p
-          className="rounded-[var(--radius-control)] bg-red-50 px-3 py-2 text-sm text-red-700"
-          role="alert"
-        >
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
           {error}
         </p>
       ) : null}
-      <button type="submit" disabled={loading} className="btn btn-primary">
-        {loading ? "Un segundo…" : mode === "login" ? "Entrar" : "Crear cuenta"}
+      <button type="submit" disabled={loading} className="btn btn-primary w-full">
+        {loading ? "Esperá…" : mode === "login" ? "Entrar" : "Crear cuenta"}
       </button>
     </form>
   );

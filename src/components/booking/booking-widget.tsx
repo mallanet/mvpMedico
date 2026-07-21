@@ -8,16 +8,20 @@ import { bookFromLanding, listAvailableSlots } from "@/lib/appointments";
 import {
   createSandboxAppointment,
   findNextSandboxDateWithSlots,
+  getSandboxDoctor,
   listSandboxAvailableSlots,
 } from "@/lib/preview-sandbox";
+import { joinPatientName } from "@/lib/patient-name";
 import { dateInputValue, nextBookableDays } from "@/lib/slots";
 import type { TimeSlot } from "@/lib/types";
 import { BookingConfirmation } from "@/components/booking/confirmation";
+import { DayCalendar } from "@/components/booking/day-calendar";
 import { SlotPicker } from "@/components/booking/slot-picker";
 
 type Props = {
   slug: string;
   doctorName: string;
+  specialty?: string;
   ctaLabel?: string;
   /** Preview sandbox: persist to localStorage under this clinic id. */
   sandboxClinicId?: string;
@@ -28,6 +32,7 @@ type Props = {
 export function BookingWidget({
   slug,
   doctorName,
+  specialty,
   ctaLabel = "Pedir turno",
   sandboxClinicId,
   embedded = false,
@@ -43,8 +48,36 @@ export function BookingWidget({
     startsAt: string;
     endsAt: string;
     patientName: string;
+    bookingCode?: string;
+  } | null>(null);
+  const [sandboxMeta, setSandboxMeta] = useState<{
+    displayName: string;
+    specialty: string;
   } | null>(null);
   const didInitDate = useRef(false);
+
+  useEffect(() => {
+    if (!sandboxClinicId) return;
+    const doctor = getSandboxDoctor();
+    setSandboxMeta({
+      displayName: doctor.displayName,
+      specialty: doctor.specialty,
+    });
+  }, [sandboxClinicId]);
+
+  const resolvedDoctorName = sandboxMeta?.displayName ?? doctorName;
+  const resolvedSpecialty = sandboxMeta?.specialty ?? specialty;
+
+  const dayHasOpenings = useMemo(() => {
+    if (!sandboxClinicId) return undefined;
+    const cache = new Map<string, boolean>();
+    for (const day of nextBookableDays(45)) {
+      const iso = dateInputValue(day);
+      const result = listSandboxAvailableSlots(sandboxClinicId, iso);
+      cache.set(iso, result.ok && result.slots.length > 0);
+    }
+    return (iso: string) => cache.get(iso) ?? false;
+  }, [sandboxClinicId]);
 
   // Client-only: land on a day that actually has openings (avoids hydration mismatch)
   useEffect(() => {
@@ -100,10 +133,19 @@ export function BookingWidget({
     setLoading(true);
     setError(null);
     const form = new FormData(event.currentTarget);
-    const patientName = String(form.get("patientName"));
+    const patientName = joinPatientName(
+      String(form.get("patientFirstName") ?? ""),
+      String(form.get("patientLastName") ?? ""),
+    );
     const patientPhone = String(form.get("patientPhone"));
     const patientEmail = String(form.get("patientEmail") || "") || undefined;
     const notes = String(form.get("notes") || "") || undefined;
+
+    if (!patientName) {
+      setLoading(false);
+      setError("Completá nombre y apellido.");
+      return;
+    }
 
     if (sandboxClinicId) {
       const result = createSandboxAppointment(sandboxClinicId, {
@@ -147,6 +189,7 @@ export function BookingWidget({
       startsAt: selected.startsAt,
       endsAt: selected.endsAt,
       patientName,
+      bookingCode: result.ok ? result.code : undefined,
     });
   }
 
@@ -154,11 +197,13 @@ export function BookingWidget({
     return (
       <div className="space-y-4">
         <BookingConfirmation
-          doctorName={doctorName}
+          doctorName={resolvedDoctorName}
+          specialty={resolvedSpecialty}
           patientName={confirmed.patientName}
           startsAt={confirmed.startsAt}
           endsAt={confirmed.endsAt}
-          isDemo={Boolean(sandboxClinicId)}
+          isDemo={Boolean(sandboxClinicId) || Boolean(confirmed.bookingCode)}
+          bookingCode={confirmed.bookingCode}
         />
         {sandboxClinicId ? (
           <div className="grid gap-2 sm:grid-cols-2">
@@ -190,36 +235,25 @@ export function BookingWidget({
       }
       aria-label={ctaLabel}
     >
-      <h2 className="text-lg font-semibold text-teal-950">{ctaLabel}</h2>
+      <div className="space-y-1">
+        {resolvedSpecialty ? (
+          <p className="text-sm font-medium uppercase tracking-[0.18em] text-teal-800/70">
+            {resolvedSpecialty}
+          </p>
+        ) : null}
+        <h2 className="text-lg font-semibold text-teal-950">{ctaLabel}</h2>
+        <p className="text-sm text-teal-900/65">
+          Con {resolvedDoctorName}
+        </p>
+      </div>
 
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium text-teal-950">Fecha</legend>
-        <div className="preview-date-scroller flex gap-2" role="group">
-          {days.map((day) => {
-            const value = dateInputValue(day);
-            const active = value === date;
-            return (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setDate(value)}
-                className={`min-h-11 shrink-0 rounded-[var(--radius-control)] border px-3 text-left text-sm transition-colors duration-[var(--dur-fast)] ${
-                  active
-                    ? "border-[color:var(--brand-forest)] bg-[color:var(--brand-forest)] text-white"
-                    : "border-[color:var(--brand-forest)]/15 bg-white text-[color:var(--foreground)] hover:border-[color:var(--brand-forest)]/40"
-                }`}
-              >
-                <span className="block capitalize">
-                  {format(day, "EEE", { locale: es })}
-                </span>
-                <span className="block tabular-nums opacity-80">
-                  {format(day, "d MMM", { locale: es })}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <DayCalendar
+          selected={date}
+          onSelect={setDate}
+          hasOpenings={dayHasOpenings}
+        />
       </fieldset>
 
       <SlotPicker
@@ -255,10 +289,26 @@ export function BookingWidget({
         </p>
       ) : null}
 
-      <label className="flex flex-col gap-1.5 text-sm text-teal-950">
-        Tu nombre
-        <input name="patientName" required autoComplete="name" className="field" />
-      </label>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="flex flex-col gap-1.5 text-sm text-teal-950">
+          Nombre
+          <input
+            name="patientFirstName"
+            required
+            autoComplete="given-name"
+            className="field"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm text-teal-950">
+          Apellido
+          <input
+            name="patientLastName"
+            required
+            autoComplete="family-name"
+            className="field"
+          />
+        </label>
+      </div>
       <label className="flex flex-col gap-1.5 text-sm text-teal-950">
         Teléfono
         <input

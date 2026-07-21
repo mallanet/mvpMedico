@@ -6,18 +6,22 @@ import { useEffect, useRef } from "react";
 
 type Props = {
   doctorName: string;
+  specialty?: string;
   patientName: string;
   startsAt: string;
   endsAt: string;
   isDemo?: boolean;
+  bookingCode?: string;
 };
 
 export function BookingConfirmation({
   doctorName,
+  specialty,
   patientName,
   startsAt,
   endsAt,
   isDemo = false,
+  bookingCode,
 }: Props) {
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -39,13 +43,20 @@ export function BookingConfirmation({
         Turno solicitado
       </h2>
       <p className="text-sm text-[color:var(--foreground)]/80">
-        {patientName}, pediste turno con {doctorName} para el{" "}
+        {patientName}, pediste turno con {doctorName}
+        {specialty ? ` (${specialty})` : ""} para el{" "}
         <strong>
           {format(parseISO(startsAt), "EEEE d MMMM HH:mm", { locale: es })}
           {" – "}
           {format(parseISO(endsAt), "HH:mm", { locale: es })}
         </strong>
         .
+        {bookingCode ? (
+          <>
+            {" "}
+            Código: <strong>{bookingCode}</strong>.
+          </>
+        ) : null}
         {isDemo
           ? " Quedó guardado en esta demo (navegador); no se escribe en el servidor."
           : " Ya quedó anotado en la agenda Waira."}

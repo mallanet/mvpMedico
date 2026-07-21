@@ -33,7 +33,28 @@ specs/                  Un directorio por feature (NNN-short-name)
 
 ## Setup local
 
-### 1. Dependencias
+### Modo demo (sin Supabase)
+
+Sin `.env.local`, o con URL/`anon` = `mock`, la app corre **100% mock**:
+
+```bash
+npm install
+npm run dev
+# → http://localhost:3000
+```
+
+| Usuario demo | Password | Notas |
+| --- | --- | --- |
+| `doctor@example.com` | `password123` | Dra. Valentina Reyes · Cardiología · `/l/dra-reyes` |
+| `admin@example.com` | `password123` | Admin membresías |
+| cualquier email | cualquier | sesión doctor demo |
+
+- Landing pública: `/l/dra-reyes`
+- Preview multi-sede: `/preview`
+- Footer: **Reiniciar demo** restaura seed + limpia sandbox
+- Spec: [`specs/002-full-demo-seed/`](./specs/002-full-demo-seed/)
+
+### 1. Dependencias (modo real)
 
 ```bash
 npm install

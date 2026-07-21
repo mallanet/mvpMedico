@@ -6,6 +6,8 @@ import {
   getClinicContext,
   hasActiveMembership,
 } from "@/lib/clinic-context";
+import { isDemoMode } from "@/lib/mock/mode";
+import { listDemoAppointmentsForResource } from "@/lib/mock/appointments";
 import { createClient } from "@/lib/supabase/server";
 import type { Appointment } from "@/lib/types";
 
@@ -21,17 +23,32 @@ export default async function CalendarPage() {
     );
   }
 
-  const supabase = await createClient();
-  const { data: appointments } = await supabase
-    .from("appointments")
-    .select(
-      "id, resource_id, patient_id, starts_at, ends_at, status, notes, patients_min(id, full_name, phone, email)",
-    )
-    .eq("resource_id", ctx.resource.id)
-    .order("starts_at", { ascending: true });
+  let normalizedAppointments: Appointment[] = [];
 
-  const normalizedAppointments: Appointment[] = (appointments ?? []).map(
-    (row) => {
+  if (isDemoMode()) {
+    normalizedAppointments = await listDemoAppointmentsForResource(
+      ctx.resource.id,
+    );
+  } else {
+    const supabase = await createClient();
+    const { data: appointments } = await supabase
+      .from("appointments")
+      .select(
+        "id, resource_id, patient_id, starts_at, ends_at, status, notes, patients_min(id, full_name, phone, email)",
+      )
+      .eq("resource_id", ctx.resource.id)
+      .order("starts_at", { ascending: true });
+
+    normalizedAppointments = (appointments ?? []).map((row: {
+      id: string;
+      resource_id: string;
+      patient_id: string | null;
+      starts_at: string;
+      ends_at: string;
+      status: Appointment["status"];
+      notes: string | null;
+      patients_min: Appointment["patients_min"] | Appointment["patients_min"][];
+    }) => {
       const patient = Array.isArray(row.patients_min)
         ? row.patients_min[0] ?? null
         : row.patients_min;
@@ -45,14 +62,21 @@ export default async function CalendarPage() {
         notes: row.notes,
         patients_min: patient,
       } as Appointment;
-    },
-  );
+    });
+  }
 
   const membershipActive = hasActiveMembership(ctx);
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Agenda" description={ctx.resource.display_name}>
+      <PageHeader
+        title="Agenda"
+        description={
+          isDemoMode()
+            ? `${ctx.profile.full_name ?? ctx.resource.display_name} · demo`
+            : ctx.resource.display_name
+        }
+      >
         <div className="flex flex-wrap items-center gap-3">
           {ctx.landing?.slug ? (
             <Link

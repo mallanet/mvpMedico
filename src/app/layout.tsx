@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AppNav } from "@/components/app-nav";
+import { ResetDemoButton } from "@/components/demo/reset-demo-button";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -41,7 +42,8 @@ export default function RootLayout({
               />
               <span>Agenda sin dobles reservas</span>
             </p>
-            <p>
+            <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <ResetDemoButton />
               <a
                 href="https://mallanet.org"
                 className="font-medium text-teal-800 underline-offset-2 hover:underline"
