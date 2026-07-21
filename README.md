@@ -118,23 +118,47 @@ Checklist mínimo (base.md §9):
 
 ## Deploy (Vercel + Supabase Cloud)
 
-1. Crear proyecto en [Supabase](https://supabase.com)
-2. `npx supabase link --project-ref <ref>`
-3. `npx supabase db push`
-4. Importar el repo en Vercel
-5. Variables de entorno (Production):
+Checklist mínimo para que el deploy no rompa auth ni Google:
 
-| Variable | Notas |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon public |
-| `SUPABASE_SERVICE_ROLE_KEY` | solo server (sync Google) |
-| `NEXT_PUBLIC_APP_URL` | `https://tu-dominio.vercel.app` |
-| `NEXT_PUBLIC_MALLANET_DONATION_URL` | CTA donación |
-| `GOOGLE_CLIENT_ID` / `SECRET` / `REDIRECT_URI` | OAuth |
+1. **Supabase Cloud**
+   - Crear proyecto → Settings → API: copiar `URL`, `anon`, `service_role`
+   - Authentication → URL Configuration:
+     - Site URL: `https://tu-dominio.vercel.app`
+     - Redirect URLs: `https://tu-dominio.vercel.app/auth/callback`
+   - Authentication → Providers → Email: desactivar “Confirm email” en MVP (o el signup queda en limbo)
+   - SQL / CLI: `npx supabase link --project-ref <ref>` luego `npx supabase db push`
 
-6. Auth → Redirect URLs: `https://tu-dominio.vercel.app/auth/callback`
-7. Deploy
+2. **Vercel**
+   - Importar este repo (framework Next.js; `vercel.json` ya fija `npm ci` + `npm run build`)
+   - Node.js **22+** (`package.json` → `engines`)
+   - Environment Variables (Production **y** Preview):
+
+| Variable | Obligatoria | Notas |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | sí | Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | sí | anon public |
+| `SUPABASE_SERVICE_ROLE_KEY` | sí* | solo server (sync Google); sin ella el resto de la app funciona |
+| `NEXT_PUBLIC_APP_URL` | sí | `https://tu-dominio.vercel.app` (sin `/` final) |
+| `NEXT_PUBLIC_MALLANET_DONATION_URL` | no | CTA donación |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | no | sin ellas Google → 501 |
+| `GOOGLE_REDIRECT_URI` | no† | default: `$NEXT_PUBLIC_APP_URL/api/google/callback` |
+
+\* Requerida solo para `/api/google/sync`.  
+† Si la definís, debe coincidir **exactamente** con Google Cloud Console.
+
+3. **Google Cloud** (opcional)
+   - OAuth client tipo Web
+   - Authorized redirect URI: `https://tu-dominio.vercel.app/api/google/callback`
+   - Scope: `calendar.readonly`
+
+4. **Smoke post-deploy**
+   - `/` carga
+   - `/signup` crea cuenta y llega a `/onboarding` (o email link si confirmación está on)
+   - Activar membresía (SQL o `/admin/memberships` con `admin_waira`)
+   - `/calendar` grilla
+   - `/l/<slug>` reserva
+
+5. **Redeploy** después de cambiar `NEXT_PUBLIC_*` (se inlinerán en el build).
 
 ## Estructura
 
