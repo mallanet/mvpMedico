@@ -11,13 +11,13 @@ export function SyncGoogleButton() {
     setMessage(null);
     const res = await fetch("/api/google/sync", { method: "POST" });
     const data = (await res.json()) as {
-      ok: boolean;
+      ok?: boolean;
       imported?: number;
       error?: string;
     };
     setLoading(false);
-    if (!data.ok) {
-      setMessage(data.error ?? "Error al sincronizar");
+    if (!res.ok || !data.ok) {
+      setMessage(data.error ?? `Error al sincronizar (${res.status})`);
       return;
     }
     setMessage(`Importados ${data.imported ?? 0} bloqueos.`);
@@ -31,7 +31,7 @@ export function SyncGoogleButton() {
         disabled={loading}
         className="rounded-lg border border-teal-900/15 px-4 py-2 text-sm hover:bg-teal-50 disabled:opacity-60"
       >
-        {loading ? "Sincronizando…" : "Sincronizar busy ahora"}
+        {loading ? "Sincronizando…" : "Sincronizar ahora"}
       </button>
       {message ? <p className="text-sm text-teal-900/80">{message}</p> : null}
     </div>

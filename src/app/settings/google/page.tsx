@@ -1,8 +1,8 @@
-import Link from "next/link";
+import { GoogleConnectButton } from "@/components/google/connect-button";
+import { SyncGoogleButton } from "@/components/google/sync-button";
 import { getClinicContext, hasActiveMembership } from "@/lib/clinic-context";
 import { googleConfigured } from "@/lib/google";
 import { createClient } from "@/lib/supabase/server";
-import { SyncGoogleButton } from "@/components/sync-google-button";
 
 export const dynamic = "force-dynamic";
 
@@ -32,35 +32,16 @@ export default async function GoogleSettingsPage() {
         </p>
       </div>
 
-      {!configured ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-          Configurá <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code> y{" "}
-          <code>GOOGLE_REDIRECT_URI</code> en el entorno.
-        </p>
-      ) : null}
-
-      {!membershipActive ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-          La sync de Google requiere membresía Waira activa.
-        </p>
-      ) : null}
-
-      <div className="rounded-xl border border-teal-900/10 bg-white p-4 space-y-3">
+      <div className="space-y-3 rounded-xl border border-teal-900/10 bg-white p-4">
         <p className="text-sm">
-          Estado:{" "}
-          <strong>{connected ? "Conectado" : "No conectado"}</strong>
+          Estado: <strong>{connected ? "Conectado" : "No conectado"}</strong>
         </p>
-        {configured && membershipActive ? (
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/api/google/oauth"
-              className="rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white hover:bg-teal-900"
-            >
-              {connected ? "Reconectar Google" : "Conectar Google"}
-            </Link>
-            {connected ? <SyncGoogleButton /> : null}
-          </div>
-        ) : null}
+        <GoogleConnectButton
+          connected={connected}
+          configured={configured}
+          membershipActive={membershipActive}
+        />
+        {configured && membershipActive && connected ? <SyncGoogleButton /> : null}
       </div>
     </div>
   );
