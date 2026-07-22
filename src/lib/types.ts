@@ -61,13 +61,33 @@ export type Membership = {
   activated_at: string | null;
 };
 
+export type ClinicMember = {
+  profileId: string;
+  fullName: string | null;
+  role: AppRole;
+  email?: string;
+};
+
 export type ClinicContext = {
   profile: Profile;
   clinicId: string;
+  clinicName: string;
+  resources: Resource[];
   resource: Resource;
   membership: Membership | null;
   landing: Landing | null;
   directory: DirectoryProfile | null;
+  members: ClinicMember[];
+};
+
+export type DirectoryListing = {
+  resourceId: string;
+  displayName: string;
+  specialty: string;
+  zone: string;
+  bioShort: string;
+  slug: string | null;
+  clinicName: string;
 };
 
 export type TimeSlot = {

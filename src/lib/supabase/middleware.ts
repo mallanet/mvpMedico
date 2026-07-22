@@ -7,6 +7,7 @@ const PROTECTED_PREFIXES = [
   "/calendar",
   "/onboarding",
   "/admin",
+  "/team",
 ] as const;
 
 const AUTH_PAGES = ["/login", "/signup"] as const;

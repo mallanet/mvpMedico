@@ -54,8 +54,12 @@ export const WAIRA_PACKAGES: PackageTier[] = [
         status: "live",
       },
       {
-        label: "Confirmación, cancelación y lista de espera",
+        label: "Confirmación y cancelación de turnos",
         status: "live",
+      },
+      {
+        label: "Lista de espera automatizada",
+        status: "roadmap",
       },
       {
         label: "Recordatorio de pago anticipado (WhatsApp/SMS)",
@@ -82,6 +86,10 @@ export const WAIRA_PACKAGES: PackageTier[] = [
       },
       {
         label: "Perfil de centro + nombres de profesionales",
+        status: "live",
+      },
+      {
+        label: "Rol recepción en la misma agenda",
         status: "live",
       },
       {

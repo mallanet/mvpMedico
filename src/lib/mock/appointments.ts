@@ -6,13 +6,21 @@ import {
 import {
   OVERLAP_MESSAGE,
   type Appointment,
+  type ClinicMember,
+  type DirectoryListing,
   type MembershipStatus,
   type TimeSlot,
 } from "@/lib/types";
 import type { ClinicContext } from "@/lib/types";
-import { bookingCode } from "@/lib/mock/seed";
+import { MAX_RESOURCES_PER_CLINIC } from "@/lib/clinic-limits";
+import {
+  bookingCode,
+  findProfessionalByResource,
+  findProfessionalBySlug,
+} from "@/lib/mock/seed";
 import { readDemoSession } from "@/lib/mock/session";
 import { readDemoDb, writeDemoDb } from "@/lib/mock/store";
+import { notifyEmail } from "@/lib/notify";
 
 export type DemoActionResult =
   | { ok: true; id?: string; code?: string }
@@ -22,7 +30,22 @@ function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: strin
   return aStart < bEnd && aEnd > bStart;
 }
 
-export async function getDemoClinicContext(): Promise<ClinicContext | null> {
+function membershipBlocked(): DemoActionResult {
+  return {
+    ok: false,
+    error: "Tu membresía está pausada. Pedile al admin que la reactive.",
+  };
+}
+
+function requireActive(ctx: ClinicContext | null): DemoActionResult | null {
+  if (!ctx?.resource.id) return { ok: false, error: "Sesión no válida." };
+  if (ctx.membership?.status !== "active") return membershipBlocked();
+  return null;
+}
+
+export async function getDemoClinicContext(
+  preferredResourceId?: string,
+): Promise<ClinicContext | null> {
   const session = await readDemoSession();
   if (!session) return null;
   const db = await readDemoDb();
@@ -35,6 +58,8 @@ export async function getDemoClinicContext(): Promise<ClinicContext | null> {
     return {
       profile: { ...profile, role: "admin_waira" },
       clinicId: "",
+      clinicName: "",
+      resources: [],
       resource: {
         id: "",
         clinic_id: "",
@@ -44,22 +69,53 @@ export async function getDemoClinicContext(): Promise<ClinicContext | null> {
       membership: null,
       landing: null,
       directory: null,
+      members: [],
     };
   }
 
   const clinic =
     db.clinics.find((c) => c.id === session.clinicId) ??
+    db.clinics.find((c) =>
+      c.members.some((m) => m.profileId === profile.id),
+    ) ??
     db.clinics.find((c) => c.ownerProfileId === profile.id) ??
     db.clinics[0];
   if (!clinic) return null;
 
+  const resources = clinic.professionals.map((p) => ({
+    id: p.resource.id,
+    clinic_id: p.resource.clinic_id,
+    profile_id: p.resource.profile_id,
+    display_name: p.resource.display_name,
+  }));
+
+  const selected =
+    resources.find((r) => r.id === preferredResourceId) ?? resources[0];
+  if (!selected) return null;
+
+  const pro = clinic.professionals.find((p) => p.resource.id === selected.id);
+  if (!pro) return null;
+
+  const members: ClinicMember[] = clinic.members.map((m) => {
+    const p = db.profiles.find((x) => x.id === m.profileId);
+    return {
+      profileId: m.profileId,
+      fullName: p?.full_name ?? null,
+      role: m.role,
+      email: m.email,
+    };
+  });
+
   return {
     profile,
     clinicId: clinic.id,
-    resource: clinic.resource,
+    clinicName: clinic.name,
+    resources,
+    resource: selected,
     membership: clinic.membership,
-    landing: clinic.landing,
-    directory: clinic.directory,
+    landing: pro.landing,
+    directory: pro.directory,
+    members,
   };
 }
 
@@ -83,6 +139,26 @@ export async function listDemoMemberships() {
   }));
 }
 
+export async function listDemoDirectory(): Promise<DirectoryListing[]> {
+  const db = await readDemoDb();
+  const out: DirectoryListing[] = [];
+  for (const clinic of db.clinics) {
+    for (const pro of clinic.professionals) {
+      if (!pro.directory.published_to_mallanet) continue;
+      out.push({
+        resourceId: pro.resource.id,
+        displayName: pro.resource.display_name,
+        specialty: pro.directory.specialty,
+        zone: pro.directory.zone,
+        bioShort: pro.directory.bio_short,
+        slug: pro.landing.is_published ? pro.landing.slug : null,
+        clinicName: clinic.name,
+      });
+    }
+  }
+  return out;
+}
+
 export async function demoCreateAppointment(input: {
   startsAt: string;
   endsAt: string;
@@ -90,20 +166,21 @@ export async function demoCreateAppointment(input: {
   patientPhone: string;
   patientEmail?: string;
   notes?: string;
+  resourceId?: string;
 }): Promise<DemoActionResult> {
-  const ctx = await getDemoClinicContext();
-  if (!ctx?.resource.id) return { ok: false, error: "Sesión no válida." };
-  if (ctx.membership?.status !== "active") {
-    return {
-      ok: false,
-      error: "Tu membresía está pausada. Pedile al admin que la reactive.",
-    };
+  const ctx = await getDemoClinicContext(input.resourceId);
+  const blocked = requireActive(ctx);
+  if (blocked || !ctx) return blocked ?? { ok: false, error: "Sesión no válida." };
+
+  const resourceId = input.resourceId ?? ctx.resource.id;
+  if (!ctx.resources.some((r) => r.id === resourceId)) {
+    return { ok: false, error: "Profesional no válido." };
   }
 
   const db = await readDemoDb();
   const overlap = db.appointments.some(
     (a) =>
-      a.resource_id === ctx.resource.id &&
+      a.resource_id === resourceId &&
       a.status !== "cancelled" &&
       rangesOverlap(a.starts_at, a.ends_at, input.startsAt, input.endsAt),
   );
@@ -115,7 +192,7 @@ export async function demoCreateAppointment(input: {
       : `apt-${Date.now()}`;
   const appointment: Appointment = {
     id,
-    resource_id: ctx.resource.id,
+    resource_id: resourceId,
     patient_id: `patient-${id}`,
     starts_at: input.startsAt,
     ends_at: input.endsAt,
@@ -130,6 +207,11 @@ export async function demoCreateAppointment(input: {
   };
   db.appointments.push(appointment);
   await writeDemoDb(db);
+  await notifyEmail({
+    to: input.patientEmail,
+    subject: "Turno agendado · Waira",
+    text: `Hola ${input.patientName}, tu turno quedó agendado para ${input.startsAt}.`,
+  });
   revalidatePath("/calendar");
   return { ok: true, id };
 }
@@ -138,20 +220,51 @@ export async function demoCancelAppointment(
   appointmentId: string,
 ): Promise<DemoActionResult> {
   const ctx = await getDemoClinicContext();
-  if (!ctx?.resource.id) return { ok: false, error: "Sesión no válida." };
-  if (ctx.membership?.status !== "active") {
-    return {
-      ok: false,
-      error: "Tu membresía está pausada. Pedile al admin que la reactive.",
-    };
-  }
+  const blocked = requireActive(ctx);
+  if (blocked || !ctx) return blocked ?? { ok: false, error: "Sesión no válida." };
+
   const db = await readDemoDb();
   const idx = db.appointments.findIndex(
-    (a) => a.id === appointmentId && a.resource_id === ctx.resource.id,
+    (a) =>
+      a.id === appointmentId &&
+      ctx.resources.some((r) => r.id === a.resource_id),
   );
   if (idx < 0) return { ok: false, error: "Turno no encontrado." };
-  db.appointments[idx] = { ...db.appointments[idx], status: "cancelled" };
+  const apt = db.appointments[idx];
+  db.appointments[idx] = { ...apt, status: "cancelled" };
   await writeDemoDb(db);
+  await notifyEmail({
+    to: apt.patients_min?.email,
+    subject: "Turno cancelado · Waira",
+    text: `Hola ${apt.patients_min?.full_name ?? ""}, tu turno fue cancelado.`,
+  });
+  revalidatePath("/calendar");
+  return { ok: true };
+}
+
+export async function demoConfirmAppointment(
+  appointmentId: string,
+): Promise<DemoActionResult> {
+  const ctx = await getDemoClinicContext();
+  const blocked = requireActive(ctx);
+  if (blocked || !ctx) return blocked ?? { ok: false, error: "Sesión no válida." };
+
+  const db = await readDemoDb();
+  const idx = db.appointments.findIndex(
+    (a) =>
+      a.id === appointmentId &&
+      ctx.resources.some((r) => r.id === a.resource_id) &&
+      a.status !== "cancelled",
+  );
+  if (idx < 0) return { ok: false, error: "Turno no encontrado." };
+  const apt = db.appointments[idx];
+  db.appointments[idx] = { ...apt, status: "confirmed" };
+  await writeDemoDb(db);
+  await notifyEmail({
+    to: apt.patients_min?.email,
+    subject: "Turno confirmado · Waira",
+    text: `Hola ${apt.patients_min?.full_name ?? ""}, tu turno quedó confirmado para ${apt.starts_at}.`,
+  });
   revalidatePath("/calendar");
   return { ok: true };
 }
@@ -162,31 +275,30 @@ export async function demoMoveAppointment(input: {
   endsAt: string;
 }): Promise<DemoActionResult> {
   const ctx = await getDemoClinicContext();
-  if (!ctx?.resource.id) return { ok: false, error: "Sesión no válida." };
-  if (ctx.membership?.status !== "active") {
-    return {
-      ok: false,
-      error: "Tu membresía está pausada. Pedile al admin que la reactive.",
-    };
-  }
+  const blocked = requireActive(ctx);
+  if (blocked || !ctx) return blocked ?? { ok: false, error: "Sesión no válida." };
+
   const db = await readDemoDb();
+  const current = db.appointments.find(
+    (a) =>
+      a.id === input.appointmentId &&
+      ctx.resources.some((r) => r.id === a.resource_id),
+  );
+  if (!current) return { ok: false, error: "Turno no encontrado." };
+
   const overlap = db.appointments.some(
     (a) =>
       a.id !== input.appointmentId &&
-      a.resource_id === ctx.resource.id &&
+      a.resource_id === current.resource_id &&
       a.status !== "cancelled" &&
       rangesOverlap(a.starts_at, a.ends_at, input.startsAt, input.endsAt),
   );
   if (overlap) return { ok: false, error: OVERLAP_MESSAGE };
-  const idx = db.appointments.findIndex(
-    (a) => a.id === input.appointmentId && a.resource_id === ctx.resource.id,
-  );
-  if (idx < 0) return { ok: false, error: "Turno no encontrado." };
+  const idx = db.appointments.findIndex((a) => a.id === input.appointmentId);
   db.appointments[idx] = {
     ...db.appointments[idx],
     starts_at: input.startsAt,
     ends_at: input.endsAt,
-    status: "scheduled",
   };
   await writeDemoDb(db);
   revalidatePath("/calendar");
@@ -203,17 +315,18 @@ export async function demoBookFromLanding(input: {
   notes?: string;
 }): Promise<DemoActionResult> {
   const db = await readDemoDb();
-  const clinic = db.clinics.find((c) => c.landing.slug === input.slug);
-  if (!clinic?.landing.is_published) {
+  const found = findProfessionalBySlug(db, input.slug);
+  if (!found?.pro.landing.is_published) {
     return { ok: false, error: "Esa landing no está disponible." };
   }
-  if (clinic.membership.status !== "active") {
+  if (found.clinic.membership.status !== "active") {
     return { ok: false, error: "La membresía Waira no está activa." };
   }
 
+  const resourceId = found.pro.resource.id;
   const overlap = db.appointments.some(
     (a) =>
-      a.resource_id === clinic.resource.id &&
+      a.resource_id === resourceId &&
       a.status !== "cancelled" &&
       rangesOverlap(a.starts_at, a.ends_at, input.startsAt, input.endsAt),
   );
@@ -231,7 +344,7 @@ export async function demoBookFromLanding(input: {
   const code = bookingCode();
   db.appointments.push({
     id,
-    resource_id: clinic.resource.id,
+    resource_id: resourceId,
     patient_id: `patient-${id}`,
     starts_at: input.startsAt,
     ends_at: input.endsAt,
@@ -245,6 +358,11 @@ export async function demoBookFromLanding(input: {
     },
   });
   await writeDemoDb(db);
+  await notifyEmail({
+    to: input.patientEmail,
+    subject: "Turno reservado · Waira",
+    text: `Hola ${input.patientName}, tu turno quedó reservado (${code}).`,
+  });
   return { ok: true, id, code };
 }
 
@@ -253,10 +371,10 @@ export async function demoListAvailableSlots(input: {
   date: string;
 }): Promise<{ ok: true; slots: TimeSlot[] } | { ok: false; error: string }> {
   const db = await readDemoDb();
-  const clinic = db.clinics.find(
-    (c) => c.landing.slug === input.slug && c.landing.is_published,
-  );
-  if (!clinic) return { ok: false, error: "Esa landing no está disponible." };
+  const found = findProfessionalBySlug(db, input.slug);
+  if (!found?.pro.landing.is_published) {
+    return { ok: false, error: "Esa landing no está disponible." };
+  }
 
   const day = new Date(`${input.date}T12:00:00`);
   const slots = buildDaySlots(day);
@@ -264,7 +382,8 @@ export async function demoListAvailableSlots(input: {
 
   const busy = db.appointments
     .filter(
-      (a) => a.resource_id === clinic.resource.id && a.status !== "cancelled",
+      (a) =>
+        a.resource_id === found.pro.resource.id && a.status !== "cancelled",
     )
     .map((a) => ({ starts_at: a.starts_at, ends_at: a.ends_at }));
 
@@ -287,6 +406,9 @@ export async function demoUpdateOnboarding(input: {
   if (!ctx?.resource.id || !ctx.landing || !ctx.directory) {
     return { ok: false, error: "Sesión no válida." };
   }
+  if (ctx.profile.role === "reception") {
+    return { ok: false, error: "Solo el médico puede editar el perfil." };
+  }
   if (
     (input.publishLanding || input.publishMallanet) &&
     ctx.membership?.status !== "active"
@@ -300,39 +422,47 @@ export async function demoUpdateOnboarding(input: {
   const db = await readDemoDb();
   const clinic = db.clinics.find((c) => c.id === ctx.clinicId);
   if (!clinic) return { ok: false, error: "Clínica no encontrada." };
+  const pro = clinic.professionals.find(
+    (p) => p.resource.id === ctx.resource.id,
+  );
+  if (!pro) return { ok: false, error: "Profesional no encontrado." };
 
-  if (
-    db.clinics.some(
-      (c) => c.id !== clinic.id && c.landing.slug === input.slug,
-    )
-  ) {
-    return { ok: false, error: "Ese slug ya está en uso." };
+  for (const c of db.clinics) {
+    for (const p of c.professionals) {
+      if (
+        p.landing.slug === input.slug &&
+        p.resource.id !== pro.resource.id
+      ) {
+        return { ok: false, error: "Ese slug ya está en uso." };
+      }
+    }
   }
 
   const profile = db.profiles.find((p) => p.id === ctx.profile.id);
-  if (profile) profile.full_name = input.fullName;
+  if (profile && pro.resource.profile_id === profile.id) {
+    profile.full_name = input.fullName;
+  }
 
-  clinic.resource.display_name = input.fullName;
-  clinic.directory = {
-    ...clinic.directory,
+  pro.resource.display_name = input.fullName;
+  pro.directory = {
+    ...pro.directory,
     specialty: input.specialty,
     zone: input.zone,
     bio_short: input.bioShort,
     published_to_mallanet: input.publishMallanet,
   };
-  clinic.landing = {
-    ...clinic.landing,
+  pro.landing = {
+    ...pro.landing,
     slug: input.slug,
     headline: input.headline,
     body: input.body,
     is_published: input.publishLanding,
     show_donation_cta: input.showDonationCta,
   };
-  clinic.specialty = input.specialty;
-  clinic.slug = input.slug;
 
   await writeDemoDb(db);
   revalidatePath("/onboarding");
+  revalidatePath("/directorio");
   revalidatePath(`/l/${input.slug}`);
   return { ok: true };
 }
@@ -358,17 +488,126 @@ export async function demoSetMembershipStatus(
   return { ok: true };
 }
 
+export async function demoAddProfessional(input: {
+  displayName: string;
+}): Promise<DemoActionResult> {
+  const ctx = await getDemoClinicContext();
+  if (!ctx?.clinicId) return { ok: false, error: "Sesión no válida." };
+  if (ctx.profile.role === "reception") {
+    return { ok: false, error: "Solo el médico puede agregar profesionales." };
+  }
+  if (ctx.membership?.status !== "active") return membershipBlocked();
+
+  const db = await readDemoDb();
+  const clinic = db.clinics.find((c) => c.id === ctx.clinicId);
+  if (!clinic) return { ok: false, error: "Clínica no encontrada." };
+  if (clinic.professionals.length >= MAX_RESOURCES_PER_CLINIC) {
+    return {
+      ok: false,
+      error: `Máximo ${MAX_RESOURCES_PER_CLINIC} profesionales por consultorio.`,
+    };
+  }
+
+  const name = input.displayName.trim();
+  if (!name) return { ok: false, error: "Nombre requerido." };
+
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `res-${Date.now()}`;
+  const slugBase = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  const slug = `${slugBase}-${id.slice(0, 8)}`;
+
+  clinic.professionals.push({
+    resource: {
+      id,
+      clinic_id: clinic.id,
+      profile_id: null,
+      display_name: name,
+      slot_minutes: 30,
+    },
+    landing: {
+      id: `landing-${id}`,
+      resource_id: id,
+      slug,
+      headline: `Agenda con ${name}`,
+      body: "Pedí tu turno desde esta página.",
+      cta_label: "Pedir turno",
+      show_donation_cta: false,
+      donation_url: null,
+      is_published: false,
+    },
+    directory: {
+      id: `dir-${id}`,
+      resource_id: id,
+      specialty: clinic.specialty,
+      zone: clinic.city,
+      bio_short: "",
+      published_to_mallanet: false,
+    },
+  });
+  await writeDemoDb(db);
+  revalidatePath("/team");
+  revalidatePath("/calendar");
+  return { ok: true, id };
+}
+
+export async function demoInviteReception(input: {
+  fullName: string;
+  email: string;
+}): Promise<DemoActionResult> {
+  const ctx = await getDemoClinicContext();
+  if (!ctx?.clinicId) return { ok: false, error: "Sesión no válida." };
+  if (ctx.profile.role !== "doctor") {
+    return { ok: false, error: "Solo el médico puede invitar recepción." };
+  }
+  if (ctx.membership?.status !== "active") return membershipBlocked();
+
+  const email = input.email.trim().toLowerCase();
+  const fullName = input.fullName.trim();
+  if (!email.includes("@") || !fullName) {
+    return { ok: false, error: "Nombre y email válidos requeridos." };
+  }
+
+  const db = await readDemoDb();
+  const clinic = db.clinics.find((c) => c.id === ctx.clinicId);
+  if (!clinic) return { ok: false, error: "Clínica no encontrada." };
+
+  if (clinic.members.some((m) => m.email === email)) {
+    return { ok: false, error: "Ese email ya está en el equipo." };
+  }
+
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `profile-${Date.now()}`;
+
+  db.profiles.push({ id, full_name: fullName, role: "reception" });
+  clinic.members.push({ profileId: id, role: "reception", email });
+  await writeDemoDb(db);
+  revalidatePath("/team");
+  return { ok: true, id };
+}
+
 export async function getDemoLandingBySlug(slug: string) {
   const db = await readDemoDb();
-  const clinic = db.clinics.find((c) => c.landing.slug === slug);
-  if (!clinic || !clinic.landing.is_published) return null;
-  const owner = db.profiles.find((p) => p.id === clinic.ownerProfileId);
+  const found = findProfessionalBySlug(db, slug);
+  if (!found || !found.pro.landing.is_published) return null;
+  const owner = db.profiles.find((p) => p.id === found.clinic.ownerProfileId);
   return {
-    landing: clinic.landing,
-    resource: clinic.resource,
-    directory: clinic.directory,
-    membership: clinic.membership,
-    clinicName: clinic.name,
-    doctorName: owner?.full_name ?? clinic.name,
+    landing: found.pro.landing,
+    resource: found.pro.resource,
+    directory: found.pro.directory,
+    membership: found.clinic.membership,
+    clinicName: found.clinic.name,
+    doctorName: found.pro.resource.display_name || owner?.full_name || found.clinic.name,
   };
+}
+
+export async function getDemoResourceLabel(resourceId: string) {
+  const db = await readDemoDb();
+  return findProfessionalByResource(db, resourceId)?.pro.resource.display_name;
 }

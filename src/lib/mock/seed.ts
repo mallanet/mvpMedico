@@ -1,6 +1,7 @@
 import type {
   Appointment,
   AppointmentStatus,
+  AppRole,
   DirectoryProfile,
   Landing,
   Membership,
@@ -21,6 +22,18 @@ export type DemoSession = {
   jwt: string;
 };
 
+export type DemoProfessional = {
+  resource: Resource & { slot_minutes: number };
+  landing: Landing;
+  directory: DirectoryProfile;
+};
+
+export type DemoMember = {
+  profileId: string;
+  role: AppRole;
+  email: string;
+};
+
 export type DemoClinic = {
   id: string;
   name: string;
@@ -29,15 +42,14 @@ export type DemoClinic = {
   city: string;
   country: string;
   address: string;
-  resource: Resource & { slot_minutes: number };
-  landing: Landing;
-  directory: DirectoryProfile;
+  professionals: DemoProfessional[];
+  members: DemoMember[];
   membership: Membership;
   ownerProfileId: string;
 };
 
 export type DemoDb = {
-  version: 1;
+  version: 2;
   profiles: Profile[];
   clinics: DemoClinic[];
   appointments: Appointment[];
@@ -46,7 +58,7 @@ export type DemoDb = {
 function startOfWeekMonday(from = new Date()): Date {
   const d = new Date(from);
   d.setHours(12, 0, 0, 0);
-  const day = d.getDay(); // 0 Sun … 6 Sat
+  const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day;
   d.setDate(d.getDate() + diff);
   return d;
@@ -73,6 +85,7 @@ function apt(
   phone: string,
   status: AppointmentStatus,
   notes: string | null = null,
+  email: string | null = null,
 ): Appointment {
   return {
     id,
@@ -86,7 +99,7 @@ function apt(
       id: `patient-${id}`,
       full_name: fullName,
       phone,
-      email: null,
+      email,
     },
   };
 }
@@ -94,7 +107,6 @@ function apt(
 /** 8 seed appointments relative to current week (Mon–Sat). */
 export function buildSeedAppointments(now = new Date()): Appointment[] {
   const week = startOfWeekMonday(now);
-  // Mon=0 … Sat=5 relative to week start
   return [
     apt(
       "apt-001",
@@ -104,6 +116,8 @@ export function buildSeedAppointments(now = new Date()): Appointment[] {
       "María López",
       "+593990000001",
       "scheduled",
+      null,
+      "maria@example.com",
     ),
     apt(
       "apt-002",
@@ -112,7 +126,7 @@ export function buildSeedAppointments(now = new Date()): Appointment[] {
       atWeekDay(week, 0, 11, 0),
       "Carlos Ruiz",
       "+593990000002",
-      "scheduled",
+      "confirmed",
     ),
     apt(
       "apt-003",
@@ -126,47 +140,47 @@ export function buildSeedAppointments(now = new Date()): Appointment[] {
     apt(
       "apt-004",
       "res-001",
-      atWeekDay(week, 1, 14, 0),
-      atWeekDay(week, 1, 14, 30),
-      "Pedro Gómez",
+      atWeekDay(week, 2, 11, 0),
+      atWeekDay(week, 2, 11, 30),
+      "Luis Pérez",
       "+593990000004",
       "scheduled",
     ),
     apt(
       "apt-005",
-      "res-002",
-      atWeekDay(week, 0, 11, 0),
-      atWeekDay(week, 0, 11, 30),
-      "Lucía Fernández",
+      "res-001",
+      atWeekDay(week, 3, 15, 0),
+      atWeekDay(week, 3, 15, 30),
+      "Elena Gómez",
       "+593990000005",
-      "scheduled",
+      "cancelled",
     ),
     apt(
       "apt-006",
-      "res-002",
-      atWeekDay(week, 2, 16, 0),
-      atWeekDay(week, 2, 16, 30),
-      "Jorge Mendoza",
+      "res-001b",
+      atWeekDay(week, 1, 10, 0),
+      atWeekDay(week, 1, 10, 30),
+      "Pedro Vega",
       "+593990000006",
-      "cancelled",
+      "scheduled",
     ),
     apt(
       "apt-007",
       "res-001",
-      atWeekDay(week, 3, 9, 30),
-      atWeekDay(week, 3, 10, 0),
-      "Sofía Vargas",
+      atWeekDay(week, 4, 9, 30),
+      atWeekDay(week, 4, 10, 0),
+      "Sofía Mena",
       "+593990000007",
       "scheduled",
     ),
     apt(
       "apt-008",
-      "res-003",
-      atWeekDay(week, 0, 10, 0),
-      atWeekDay(week, 0, 10, 45),
-      "Diego Herrera",
+      "res-001",
+      atWeekDay(week, 5, 12, 0),
+      atWeekDay(week, 5, 12, 30),
+      "Diego Castro",
       "+593990000008",
-      "scheduled",
+      "confirmed",
     ),
   ];
 }
@@ -184,11 +198,66 @@ function membership(
   };
 }
 
+function professional(input: {
+  resourceId: string;
+  clinicId: string;
+  profileId: string | null;
+  displayName: string;
+  slotMinutes: number;
+  landingId: string;
+  slug: string;
+  headline: string;
+  body: string;
+  published: boolean;
+  dirId: string;
+  specialty: string;
+  zone: string;
+  bio: string;
+  publishedMallanet: boolean;
+  showDonation?: boolean;
+}): DemoProfessional {
+  return {
+    resource: {
+      id: input.resourceId,
+      clinic_id: input.clinicId,
+      profile_id: input.profileId,
+      display_name: input.displayName,
+      slot_minutes: input.slotMinutes,
+    },
+    landing: {
+      id: input.landingId,
+      resource_id: input.resourceId,
+      slug: input.slug,
+      headline: input.headline,
+      body: input.body,
+      cta_label: "Pedir turno",
+      show_donation_cta: input.showDonation ?? false,
+      donation_url: input.showDonation
+        ? "https://mallanet.example/donate"
+        : null,
+      is_published: input.published,
+    },
+    directory: {
+      id: input.dirId,
+      resource_id: input.resourceId,
+      specialty: input.specialty,
+      zone: input.zone,
+      bio_short: input.bio,
+      published_to_mallanet: input.publishedMallanet,
+    },
+  };
+}
+
 export function buildSeedDb(now = new Date()): DemoDb {
   const doctor: Profile = {
     id: "profile-doctor-reyes",
     full_name: "Dra. Valentina Reyes",
     role: "doctor",
+  };
+  const reception: Profile = {
+    id: "profile-reception-reyes",
+    full_name: "Lucía Recepción",
+    role: "reception",
   };
   const admin: Profile = {
     id: "profile-admin-waira",
@@ -216,32 +285,51 @@ export function buildSeedDb(now = new Date()): DemoDb {
       country: "Ecuador",
       address: "Av. Demo 123, Quito",
       ownerProfileId: doctor.id,
-      resource: {
-        id: "res-001",
-        clinic_id: "clinic-001",
-        profile_id: doctor.id,
-        display_name: "Consultorio 1",
-        slot_minutes: 30,
-      },
-      landing: {
-        id: "landing-001",
-        resource_id: "res-001",
-        slug: "dra-reyes",
-        headline: "Agenda con la Dra. Valentina Reyes",
-        body: "Consultorio de demostración Waira. Datos ficticios. Cardiología en Quito.",
-        cta_label: "Pedir turno",
-        show_donation_cta: true,
-        donation_url: "https://mallanet.example/donate",
-        is_published: true,
-      },
-      directory: {
-        id: "dir-001",
-        resource_id: "res-001",
-        specialty: "Cardiología",
-        zone: "Quito",
-        bio_short: "Cardiología clínica. Demo Waira sin backend.",
-        published_to_mallanet: true,
-      },
+      members: [
+        { profileId: doctor.id, role: "doctor", email: "doctor@example.com" },
+        {
+          profileId: reception.id,
+          role: "reception",
+          email: "reception@example.com",
+        },
+      ],
+      professionals: [
+        professional({
+          resourceId: "res-001",
+          clinicId: "clinic-001",
+          profileId: doctor.id,
+          displayName: "Dra. Valentina Reyes",
+          slotMinutes: 30,
+          landingId: "landing-001",
+          slug: "dra-reyes",
+          headline: "Agenda con la Dra. Valentina Reyes",
+          body: "Consultorio de demostración Waira. Datos ficticios. Cardiología en Quito.",
+          published: true,
+          dirId: "dir-001",
+          specialty: "Cardiología",
+          zone: "Quito",
+          bio: "Cardiología clínica. Demo Waira sin backend.",
+          publishedMallanet: true,
+          showDonation: true,
+        }),
+        professional({
+          resourceId: "res-001b",
+          clinicId: "clinic-001",
+          profileId: null,
+          displayName: "Dra. Reyes — controles",
+          slotMinutes: 30,
+          landingId: "landing-001b",
+          slug: "dra-reyes-controles",
+          headline: "Controles cardiológicos",
+          body: "Agenda de controles. Segundo profesional del consultorio demo.",
+          published: true,
+          dirId: "dir-001b",
+          specialty: "Cardiología",
+          zone: "Quito",
+          bio: "Controles y seguimiento.",
+          publishedMallanet: true,
+        }),
+      ],
       membership: membership("mem-001", "clinic-001", "active"),
     },
     {
@@ -253,32 +341,32 @@ export function buildSeedDb(now = new Date()): DemoDb {
       country: "Ecuador",
       address: "Av. Demo 456, Guayaquil",
       ownerProfileId: andinoDoctor.id,
-      resource: {
-        id: "res-002",
-        clinic_id: "clinic-002",
-        profile_id: andinoDoctor.id,
-        display_name: "Box A",
-        slot_minutes: 30,
-      },
-      landing: {
-        id: "landing-002",
-        resource_id: "res-002",
-        slug: "centro-andino",
-        headline: "Centro Médico Andino",
-        body: "Consultorio de demostración Waira. Datos ficticios.",
-        cta_label: "Pedir turno",
-        show_donation_cta: false,
-        donation_url: null,
-        is_published: true,
-      },
-      directory: {
-        id: "dir-002",
-        resource_id: "res-002",
-        specialty: "Medicina General",
-        zone: "Guayaquil",
-        bio_short: "Medicina general — demo.",
-        published_to_mallanet: true,
-      },
+      members: [
+        {
+          profileId: andinoDoctor.id,
+          role: "doctor",
+          email: "andino@example.com",
+        },
+      ],
+      professionals: [
+        professional({
+          resourceId: "res-002",
+          clinicId: "clinic-002",
+          profileId: andinoDoctor.id,
+          displayName: "Dr. Andrés Molina",
+          slotMinutes: 30,
+          landingId: "landing-002",
+          slug: "centro-andino",
+          headline: "Centro Médico Andino",
+          body: "Consultorio de demostración Waira. Datos ficticios.",
+          published: true,
+          dirId: "dir-002",
+          specialty: "Medicina General",
+          zone: "Guayaquil",
+          bio: "Medicina general — demo.",
+          publishedMallanet: true,
+        }),
+      ],
       membership: membership("mem-002", "clinic-002", "active"),
     },
     {
@@ -290,42 +378,58 @@ export function buildSeedDb(now = new Date()): DemoDb {
       country: "Ecuador",
       address: "Av. Demo 789, Cuenca",
       ownerProfileId: valleDoctor.id,
-      resource: {
-        id: "res-003",
-        clinic_id: "clinic-003",
-        profile_id: valleDoctor.id,
-        display_name: "Sala 2",
-        slot_minutes: 45,
-      },
-      landing: {
-        id: "landing-003",
-        resource_id: "res-003",
-        slug: "clinica-valle",
-        headline: "Clínica del Valle",
-        body: "Landing no publicada (membresía pausada).",
-        cta_label: "Pedir turno",
-        show_donation_cta: false,
-        donation_url: null,
-        is_published: false,
-      },
-      directory: {
-        id: "dir-003",
-        resource_id: "res-003",
-        specialty: "Dermatología",
-        zone: "Cuenca",
-        bio_short: "Dermatología — demo pausada.",
-        published_to_mallanet: false,
-      },
+      members: [
+        {
+          profileId: valleDoctor.id,
+          role: "doctor",
+          email: "valle@example.com",
+        },
+      ],
+      professionals: [
+        professional({
+          resourceId: "res-003",
+          clinicId: "clinic-003",
+          profileId: valleDoctor.id,
+          displayName: "Dra. Camila Ortiz",
+          slotMinutes: 45,
+          landingId: "landing-003",
+          slug: "clinica-valle",
+          headline: "Clínica del Valle",
+          body: "Landing no publicada (membresía pausada).",
+          published: false,
+          dirId: "dir-003",
+          specialty: "Dermatología",
+          zone: "Cuenca",
+          bio: "Dermatología — demo pausada.",
+          publishedMallanet: false,
+        }),
+      ],
       membership: membership("mem-003", "clinic-003", "paused"),
     },
   ];
 
   return {
-    version: 1,
-    profiles: [doctor, admin, andinoDoctor, valleDoctor],
+    version: 2,
+    profiles: [doctor, reception, admin, andinoDoctor, valleDoctor],
     clinics,
     appointments: buildSeedAppointments(now),
   };
+}
+
+export function findProfessionalBySlug(db: DemoDb, slug: string) {
+  for (const clinic of db.clinics) {
+    const pro = clinic.professionals.find((p) => p.landing.slug === slug);
+    if (pro) return { clinic, pro };
+  }
+  return null;
+}
+
+export function findProfessionalByResource(db: DemoDb, resourceId: string) {
+  for (const clinic of db.clinics) {
+    const pro = clinic.professionals.find((p) => p.resource.id === resourceId);
+    if (pro) return { clinic, pro };
+  }
+  return null;
 }
 
 export function sessionForEmail(email: string): DemoSession {
@@ -340,19 +444,33 @@ export function sessionForEmail(email: string): DemoSession {
     };
   }
   if (
+    normalized === "reception@example.com" ||
+    normalized.startsWith("reception@")
+  ) {
+    return {
+      email: normalized,
+      role: "reception",
+      profileId: "profile-reception-reyes",
+      clinicId: "clinic-001",
+      jwt: "mock-jwt-reception",
+    };
+  }
+  if (
     normalized === "doctor@example.com" ||
     normalized.includes("reyes") ||
     normalized === "patient.demo@waira.test"
   ) {
     return {
-      email: normalized === "patient.demo@waira.test" ? "doctor@example.com" : normalized,
+      email:
+        normalized === "patient.demo@waira.test"
+          ? "doctor@example.com"
+          : normalized,
       role: "doctor",
       profileId: "profile-doctor-reyes",
       clinicId: "clinic-001",
       jwt: "mock-jwt-doctor",
     };
   }
-  // Generic signup / any credential → doctor on clinic-001
   return {
     email: normalized || "demo@waira.test",
     role: "doctor",

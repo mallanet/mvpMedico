@@ -10,7 +10,7 @@ function parseDb(raw: string | undefined | null): DemoDb | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as DemoDb;
-    if (parsed?.version !== 1 || !Array.isArray(parsed.appointments)) return null;
+    if (parsed?.version !== 2 || !Array.isArray(parsed.appointments)) return null;
     return parsed;
   } catch {
     return null;

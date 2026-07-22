@@ -14,6 +14,7 @@ type Props = {
   patientName: string;
   patientPhone: string;
   notes: string;
+  status?: "scheduled" | "confirmed" | "cancelled";
   pending: boolean;
   membershipActive: boolean;
   error?: string | null;
@@ -25,6 +26,7 @@ type Props = {
   }) => void;
   onMove: (input: { startsAt: string; endsAt: string }) => void;
   onCancel?: () => void;
+  onConfirm?: () => void;
 };
 
 export function AppointmentDialog({
@@ -34,6 +36,7 @@ export function AppointmentDialog({
   patientName,
   patientPhone,
   notes,
+  status,
   pending,
   membershipActive,
   error,
@@ -41,6 +44,7 @@ export function AppointmentDialog({
   onCreate,
   onMove,
   onCancel,
+  onConfirm,
 }: Props) {
   const [localStart, setLocalStart] = useState(
     format(parseISO(startsAt), "yyyy-MM-dd'T'HH:mm"),
@@ -160,10 +164,21 @@ export function AppointmentDialog({
             </label>
           </>
         ) : (
-          <p className="text-sm text-teal-900/80">
-            {patientName || "Sin paciente"}
-            {patientPhone ? ` · ${patientPhone}` : ""}
-          </p>
+          <div className="space-y-1 text-sm text-teal-900/80">
+            <p>
+              {patientName || "Sin paciente"}
+              {patientPhone ? ` · ${patientPhone}` : ""}
+            </p>
+            {status ? (
+              <p className="text-xs font-medium uppercase tracking-wide text-teal-800/70">
+                {status === "confirmed"
+                  ? "Confirmado"
+                  : status === "cancelled"
+                    ? "Cancelado"
+                    : "Agendado"}
+              </p>
+            ) : null}
+          </div>
         )}
 
         <div className="flex flex-wrap gap-2 pt-1">
@@ -178,6 +193,19 @@ export function AppointmentDialog({
                 : mode === "create"
                   ? "Crear turno"
                   : "Mover turno"}
+            </button>
+          ) : null}
+          {mode === "edit" &&
+          status === "scheduled" &&
+          onConfirm &&
+          membershipActive ? (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={onConfirm}
+              className="rounded-lg border border-teal-800/30 px-4 py-2 text-sm font-medium text-teal-900 hover:bg-teal-50 disabled:opacity-60"
+            >
+              Confirmar turno
             </button>
           ) : null}
           {mode === "edit" && onCancel && membershipActive ? (

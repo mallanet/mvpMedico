@@ -3,29 +3,45 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { WairaMark } from "@/components/waira-mark";
-
-const appLinks = [
-  { href: "/calendar", label: "Agenda" },
-  { href: "/onboarding", label: "Perfil / Landing" },
-  { href: "/admin/memberships", label: "Membresías" },
-];
+import type { AppRole } from "@/lib/types";
 
 const publicLinks = [
   { href: "/servicios", label: "Servicios" },
-  { href: "/clinicas", label: "Clínicas" },
+  { href: "/directorio", label: "Directorio" },
   { href: "/calculadora", label: "Calculadora" },
   { href: "/preview", label: "Preview" },
-  { href: "/preview/doctor", label: "Doctor demo" },
 ];
 
-export function AppNavBar({ signedIn }: { signedIn: boolean }) {
+type Props = {
+  signedIn: boolean;
+  role: AppRole | null;
+};
+
+export function AppNavBar({ signedIn, role }: Props) {
   const pathname = usePathname();
   const isPublicLanding =
     pathname.startsWith("/l/") ||
     pathname.startsWith("/preview") ||
     pathname.startsWith("/clinicas") ||
     pathname.startsWith("/calculadora") ||
-    pathname.startsWith("/servicios");
+    pathname.startsWith("/servicios") ||
+    pathname.startsWith("/directorio");
+
+  const appLinks: { href: string; label: string }[] = [];
+  if (role === "admin_waira") {
+    appLinks.push({ href: "/admin/memberships", label: "Membresías" });
+  } else if (role === "reception") {
+    appLinks.push(
+      { href: "/calendar", label: "Agenda" },
+      { href: "/team", label: "Equipo" },
+    );
+  } else if (role === "doctor") {
+    appLinks.push(
+      { href: "/calendar", label: "Agenda" },
+      { href: "/team", label: "Equipo" },
+      { href: "/onboarding", label: "Perfil / Landing" },
+    );
+  }
 
   return (
     <header className="border-b border-[color:var(--brand-forest)]/10 bg-white/80 backdrop-blur">
@@ -53,28 +69,16 @@ export function AppNavBar({ signedIn }: { signedIn: boolean }) {
               </Link>
             ))}
             <Link
+              href="/directorio"
+              className="nav-link hover:bg-[color:var(--brand-foam)]"
+            >
+              Directorio
+            </Link>
+            <Link
               href="/servicios"
               className="nav-link hover:bg-[color:var(--brand-foam)]"
             >
               Servicios
-            </Link>
-            <Link
-              href="/calculadora"
-              className="nav-link hover:bg-[color:var(--brand-foam)]"
-            >
-              Calculadora
-            </Link>
-            <Link
-              href="/preview"
-              className="nav-link hover:bg-[color:var(--brand-foam)]"
-            >
-              Preview
-            </Link>
-            <Link
-              href="/preview/doctor"
-              className="nav-link hover:bg-[color:var(--brand-foam)]"
-            >
-              Doctor demo
             </Link>
             <form action="/auth/signout" method="post">
               <button

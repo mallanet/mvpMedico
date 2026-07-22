@@ -173,4 +173,59 @@ test.describe("smoke", () => {
     await expect(page.getByText(/turno solicitado/i)).toBeVisible();
     await expect(page.getByText(/WRA-/i)).toBeVisible();
   });
+
+  test("directorio lists published profiles", async ({ page }) => {
+    await page.goto("/directorio");
+    await expect(
+      page.getByRole("heading", { name: /directorio waira/i }),
+    ).toBeVisible();
+    await expect(page.getByText(/valentina|reyes/i).first()).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /pedir turno/i }).first(),
+    ).toBeVisible();
+  });
+
+  test("reception can open calendar and confirm", async ({ page }) => {
+    test.skip(
+      process.env.NEXT_PUBLIC_SUPABASE_URL !== "mock" &&
+        Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+      "Requires demo mode (NEXT_PUBLIC_SUPABASE_URL=mock)",
+    );
+
+    await page.goto("/login");
+    await page.getByLabel(/email/i).fill("reception@example.com");
+    await page.getByLabel(/contraseña/i).fill("password123");
+    await page.getByRole("button", { name: /entrar/i }).click();
+    await expect(page).toHaveURL(/\/calendar/);
+    await expect(page.getByRole("link", { name: /equipo/i })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /perfil \/ landing/i }),
+    ).toHaveCount(0);
+
+    await page.getByRole("button", { name: /maría lópez/i }).click();
+    await expect(
+      page.getByRole("button", { name: /confirmar turno/i }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: /confirmar turno/i }).click();
+    await page.getByRole("button", { name: /carlos ruiz/i }).click();
+    await expect(page.getByText(/confirmado/i)).toBeVisible();
+  });
+
+  test("team page shows professionals", async ({ page }) => {
+    test.skip(
+      process.env.NEXT_PUBLIC_SUPABASE_URL !== "mock" &&
+        Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+      "Requires demo mode (NEXT_PUBLIC_SUPABASE_URL=mock)",
+    );
+
+    await page.goto("/login");
+    await page.getByLabel(/email/i).fill("doctor@example.com");
+    await page.getByLabel(/contraseña/i).fill("password123");
+    await page.getByRole("button", { name: /entrar/i }).click();
+    await page.goto("/team");
+    await expect(page.getByRole("heading", { level: 1, name: /^equipo$/i })).toBeVisible();
+    await expect(page.getByText(/dra\. valentina reyes/i).first()).toBeVisible();
+    await expect(page.getByText(/controles/i).first()).toBeVisible();
+    await expect(page.getByText(/lucía recepción/i)).toBeVisible();
+  });
 });

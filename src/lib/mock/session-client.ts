@@ -3,9 +3,33 @@ import {
   sessionForEmail,
   type DemoSession,
 } from "@/lib/mock/seed";
+import { readDemoDbClient } from "@/lib/mock/store-client";
 
 export function demoSessionFromCredentials(email: string): DemoSession {
-  return sessionForEmail(email);
+  const normalized = email.trim().toLowerCase();
+  const db = readDemoDbClient();
+
+  for (const clinic of db.clinics) {
+    const member = clinic.members.find((m) => m.email === normalized);
+    if (member) {
+      return {
+        email: normalized,
+        role: member.role,
+        profileId: member.profileId,
+        clinicId: clinic.id,
+        jwt: `mock-jwt-${member.role}`,
+      };
+    }
+  }
+
+  const profileByName = db.profiles.find(
+    (p) => p.full_name?.toLowerCase().includes(normalized.split("@")[0] ?? ""),
+  );
+  if (profileByName && profileByName.role === "admin_waira") {
+    return sessionForEmail(normalized);
+  }
+
+  return sessionForEmail(normalized);
 }
 
 /** Set session cookie from the browser (login form). */

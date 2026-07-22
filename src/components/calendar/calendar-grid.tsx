@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
 import {
   cancelAppointment,
+  confirmAppointment,
   createAppointment,
   moveAppointment,
 } from "@/lib/appointments";
@@ -40,6 +41,7 @@ export type CalendarMutations = {
     endsAt: string;
   }) => Promise<ActionResult>;
   cancel: (appointmentId: string) => Promise<ActionResult>;
+  confirm?: (appointmentId: string) => Promise<ActionResult>;
 };
 
 type Props = {
@@ -191,6 +193,21 @@ export function CalendarGrid({
     });
   }
 
+  function onConfirm(id: string) {
+    setError(null);
+    startTransition(async () => {
+      const result = mutations?.confirm
+        ? await mutations.confirm(id)
+        : await confirmAppointment(id);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setDialog(null);
+      refresh();
+    });
+  }
+
   return (
     <div className="cal space-y-4">
       {!membershipActive ? (
@@ -280,6 +297,11 @@ export function CalendarGrid({
                     className={[
                       "cal-slot",
                       appt && isApptStart ? "cal-slot--appt" : "",
+                      appt &&
+                      isApptStart &&
+                      appt.status === "confirmed"
+                        ? "cal-slot--confirmed"
+                        : "",
                       appt && !isApptStart ? "cal-slot--appt-cont" : "",
                       !appt && membershipActive ? "cal-slot--free" : "",
                       !appt && !membershipActive ? "cal-slot--locked" : "",
@@ -332,6 +354,9 @@ export function CalendarGrid({
               : ""
           }
           notes={dialog.type === "edit" ? (dialog.appointment.notes ?? "") : ""}
+          status={
+            dialog.type === "edit" ? dialog.appointment.status : undefined
+          }
           pending={pending}
           membershipActive={membershipActive}
           error={error}
@@ -344,6 +369,11 @@ export function CalendarGrid({
           onCancel={
             dialog.type === "edit"
               ? () => onCancel(dialog.appointment.id)
+              : undefined
+          }
+          onConfirm={
+            dialog.type === "edit"
+              ? () => onConfirm(dialog.appointment.id)
               : undefined
           }
         />

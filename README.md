@@ -45,11 +45,14 @@ npm run dev
 
 | Usuario demo | Password | Notas |
 | --- | --- | --- |
-| `doctor@example.com` | `password123` | Dra. Valentina Reyes · Cardiología · `/l/dra-reyes` |
+| `doctor@example.com` | `password123` | Dra. Valentina Reyes · 2 agendas · `/l/dra-reyes` |
+| `reception@example.com` | `password123` | Recepción clínica Reyes |
 | `admin@example.com` | `password123` | Admin membresías |
 | cualquier email | cualquier | sesión doctor demo |
 
-- Landing pública: `/l/dra-reyes`
+- Landing pública: `/l/dra-reyes` y `/l/dra-reyes-controles`
+- Directorio Waira: `/directorio`
+- Equipo: `/team` (profesionales + invitar recepción)
 - Preview multi-sede: `/preview`
 - Footer: **Reiniciar demo** restaura seed + limpia sandbox
 - Spec: [`specs/002-full-demo-seed/`](./specs/002-full-demo-seed/)

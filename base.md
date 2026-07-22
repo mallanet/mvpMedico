@@ -2,8 +2,8 @@
 
 Documento de alineación del equipo. Si algo de producto cambia, se edita acá (mejor en un PR que en un chat suelto).
 
-**Última actualización:** 2026-07-21  
-**Estado:** wire-up MVP funcional (agenda visual + slots + seed + gating) + página comercial `/servicios`
+**Última actualización:** 2026-07-22  
+**Estado:** paquetes Arranque/Consultorio operativos en demo (confirmación, recepción, multi-agenda, directorio) + página comercial `/servicios`
 
 Nombres que usamos: **Waira** vende; **mvpMedico** es el repo y el producto técnico; **Mallanet** es el hub (directorio y donaciones). El **Directorio Waira** es el directorio público propio incluido en todos los paquetes (visibilidad vía Mallanet / flags actuales).
 
@@ -275,21 +275,23 @@ Orden sugerido de trabajo. El scaffold de §6 está en el repo; esto es lo que f
 
 1. [x] **Disponibilidad + slots** — horario de atención y turnos bookables (30 min, Lun–Sáb)
 2. [x] **Calendario semanal visual** — grilla usable para médico/recepción
-3. [ ] **Rol recepción** — invitar/usar recepción; signup hoy solo bootstrapéa médico
+3. [x] **Rol recepción** — invitar/usar recepción; signup bootstrapéa médico
 4. [ ] **Cobro membresía** — Stripe u equivalente LatAm (hoy stub `active`/`paused`/`cancelled`)
 5. [ ] **Deploy cloud** — Vercel + Supabase cloud (URL compartible)
 
 ### Integraciones / producto
 
 6. [x] **Google Calendar** — retirado; no E2E OAuth
-7. [ ] **API Mallanet** — publicación real al directorio (hoy: flag + CTA)
-8. [ ] **Notificaciones** — email (o canal) al crear/cancelar turno
-9. [ ] **Confirmar turno** — flujo claro médico/recepción → `confirmed`
+7. [ ] **API Mallanet** — publicación real al directorio (hoy: flag + `/directorio` local)
+8. [x] **Notificaciones** — email al crear/confirmar/cancelar (Resend opcional; no-op sin key)
+9. [x] **Confirmar turno** — médico/recepción → `confirmed`
 
 ### Calidad / equipo
 
 10. [x] **E2E de caminos críticos** — smoke siempre; agenda/landing/admin con `E2E_*`
-11. [x] **Seed demo** — `doctor@example.com` / `admin@example.com` + landing `dra-demo`
+11. [x] **Seed demo** — `doctor@example.com` / `reception@example.com` / `admin@example.com` + landings demo
+12. [x] **Multi-resource** — hasta 5 agendas por clínica + selector
+13. [x] **Directorio Waira** — `/directorio` lista perfiles `published_to_mallanet`
 
 Fuera de v1: ver §7.
 
@@ -299,6 +301,7 @@ Fuera de v1: ver §7.
 
 | Fecha | Cambio |
 | --- | --- |
+| 2026-07-22 | Package completeness: confirmar, recepción, multi-resource, `/directorio`, notify email, copy honesto |
 | 2026-07-21 | Paquetes comerciales v2: §4 Balance/Modelo A, landing add-on, página `/servicios` |
 | 2026-07-21 | Wire-up: grilla semanal, slots públicos, seed demo, membership cancelled, E2E ampliados |
 | 2026-07-20 | Primera versión: visión, MVP, stack |

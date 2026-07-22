@@ -4,12 +4,11 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { isDemoMode } from "@/lib/mock/mode";
-import { buildSeedDb } from "@/lib/mock/seed";
 import {
   demoSessionFromCredentials,
   setDemoSessionClient,
 } from "@/lib/mock/session-client";
-import { writeDemoDbClient } from "@/lib/mock/store-client";
+import { readDemoDbClient, writeDemoDbClient } from "@/lib/mock/store-client";
 
 type Mode = "login" | "signup";
 
@@ -34,15 +33,22 @@ export function AuthForm({ mode }: { mode: Mode }) {
         setLoading(false);
         return;
       }
+      // Sync cookie from LS without resetting seed (preserves invites / turnos).
+      writeDemoDbClient(readDemoDbClient());
       const session = demoSessionFromCredentials(email);
       setDemoSessionClient(session);
-      // Ensure seed DB cookie exists for server reads after navigation
-      writeDemoDbClient(buildSeedDb());
       if (mode === "signup" && fullName.trim()) {
-        // Keep session on Dra. Reyes clinic; name is cosmetic in demo signup
         void fullName;
       }
-      router.push(mode === "signup" ? "/onboarding" : "/calendar");
+      const next =
+        session.role === "admin_waira"
+          ? "/admin/memberships"
+          : session.role === "reception"
+            ? "/calendar"
+            : mode === "signup"
+              ? "/onboarding"
+              : "/calendar";
+      router.push(next);
       router.refresh();
       return;
     }
@@ -119,8 +125,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
       </label>
       {isDemoMode() ? (
         <p className="text-xs text-teal-900/60">
-          Modo demo: cualquier credencial funciona. Probá{" "}
-          <code>doctor@example.com</code> o <code>admin@example.com</code>.
+          Modo demo:{" "}
+          <code>doctor@example.com</code>,{" "}
+          <code>reception@example.com</code> o{" "}
+          <code>admin@example.com</code> · cualquier contraseña.
         </p>
       ) : null}
       {error ? (

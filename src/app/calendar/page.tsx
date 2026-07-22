@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CalendarIsland } from "@/components/calendar/calendar-island";
+import { ResourceSwitcher } from "@/components/calendar/resource-switcher";
 import { PageHeader } from "@/components/page-header";
 import { Banner } from "@/components/ui/banner";
 import {
@@ -73,11 +74,15 @@ export default async function CalendarPage() {
         title="Agenda"
         description={
           isDemoMode()
-            ? `${ctx.profile.full_name ?? ctx.resource.display_name} · demo`
-            : ctx.resource.display_name
+            ? `${ctx.clinicName || ctx.profile.full_name} · demo`
+            : ctx.clinicName || ctx.resource.display_name
         }
       >
         <div className="flex flex-wrap items-center gap-3">
+          <ResourceSwitcher
+            resources={ctx.resources}
+            selectedId={ctx.resource.id}
+          />
           {ctx.landing?.slug ? (
             <Link
               href={`/l/${ctx.landing.slug}`}
