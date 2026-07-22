@@ -12,6 +12,7 @@ const appLinks = [
 
 const publicLinks = [
   { href: "/clinicas", label: "Clínicas" },
+  { href: "/calculadora", label: "Calculadora" },
   { href: "/preview", label: "Preview" },
   { href: "/preview/doctor", label: "Doctor demo" },
 ];
@@ -21,7 +22,8 @@ export function AppNavBar({ signedIn }: { signedIn: boolean }) {
   const isPublicLanding =
     pathname.startsWith("/l/") ||
     pathname.startsWith("/preview") ||
-    pathname.startsWith("/clinicas");
+    pathname.startsWith("/clinicas") ||
+    pathname.startsWith("/calculadora");
 
   return (
     <header className="border-b border-[color:var(--brand-forest)]/10 bg-white/80 backdrop-blur">
@@ -48,6 +50,12 @@ export function AppNavBar({ signedIn }: { signedIn: boolean }) {
                 {link.label}
               </Link>
             ))}
+            <Link
+              href="/calculadora"
+              className="nav-link hover:bg-[color:var(--brand-foam)]"
+            >
+              Calculadora
+            </Link>
             <Link
               href="/preview"
               className="nav-link hover:bg-[color:var(--brand-foam)]"

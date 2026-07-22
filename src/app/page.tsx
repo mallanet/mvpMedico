@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NoShowCalculator } from "@/components/calculator/no-show-calculator";
 import { WairaMark } from "@/components/waira-mark";
 
 const diptychs = [
@@ -128,6 +129,28 @@ export default function HomePage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section
+        aria-labelledby="noshow-heading"
+        className="space-y-8 border-t border-teal-900/10 pt-12"
+      >
+        <div className="max-w-xl space-y-2">
+          <p className="inline-flex rounded-full border border-teal-900/15 bg-teal-50 px-3 py-1 text-xs font-medium text-teal-800">
+            Diagnóstico gratis · 30 segundos
+          </p>
+          <h2
+            id="noshow-heading"
+            className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-tight text-teal-950 sm:text-3xl"
+          >
+            ¿Cuánto dinero se te escapa por cada cita fantasma?
+          </h2>
+          <p className="text-sm leading-relaxed text-teal-900/70">
+            Ingresa tu tarifa y cuántos pacientes no llegan. En segundos ves lo
+            que estás perdiendo hoy — y cuánto podrías recuperar con Waira.
+          </p>
+        </div>
+        <NoShowCalculator mode="teaser" />
       </section>
 
       <section
