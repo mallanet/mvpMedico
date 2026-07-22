@@ -3,9 +3,9 @@
 Documento de alineación del equipo. Si algo de producto cambia, se edita acá (mejor en un PR que en un chat suelto).
 
 **Última actualización:** 2026-07-21  
-**Estado:** wire-up MVP funcional (agenda visual + slots + seed + gating)
+**Estado:** wire-up MVP funcional (agenda visual + slots + seed + gating) + página comercial `/servicios`
 
-Nombres que usamos: **Waira** vende; **mvpMedico** es el repo y el producto técnico; **Mallanet** es el hub (directorio y donaciones).
+Nombres que usamos: **Waira** vende; **mvpMedico** es el repo y el producto técnico; **Mallanet** es el hub (directorio y donaciones). El **Directorio Waira** es el directorio público propio incluido en todos los paquetes (visibilidad vía Mallanet / flags actuales).
 
 ---
 
@@ -17,26 +17,29 @@ Online tampoco alcanza con “estar en internet”: el paciente busca especialid
 
 ## 2. Qué hacemos
 
-Waira cobra una membresía. El médico recibe:
+Waira vende paquetes (implementación + recurrencia mensual). Según el paquete, el cliente recibe:
 
-1. Ficha en el directorio de Mallanet
-2. Landing propia (entre el directorio y la reserva)
-3. Formulario/asistente de contacto que escribe en la agenda
-4. Agenda central con anti-solape (fuente de verdad en Postgres; sin Google Calendar)
+1. Perfil en el **Directorio Waira** (incluido en todos los paquetes)
+2. Agenda central con anti-solape (fuente de verdad en Postgres; sin Google Calendar)
+3. Formulario/asistente web de reserva (mensajería / recordatorio de pago: roadmap)
+4. **Landing** como add-on (no viene por defecto en el paquete base)
 
-No metemos HCE, telemedicina ni facturación de obras sociales en esta fase.
+No metemos HCE avanzada, telemedicina ni facturación electrónica / obras sociales en esta fase. HCE básica solo como add-on bajo pedido.
 
 ```text
 Paciente                Médico / Clínica              Comunidad
    │                         │                            │
    ▼                         ▼                            ▼
-Mallanet (directorio)   Waira ($100/mes)            Donación opcional
-   │                         │                      → Mallanet
-   └──── landing ────────────┘
-              │
+Directorio Waira        Paquetes Waira              Donación opcional
+   │                    (Arranque / Consultorio /   → Mallanet
+   │                     Centro) + add-ons
+   └──── landing* ───────────┘
+              │  *add-on
               ▼
-         mvpMedico (agenda + asistente + sync)
+         mvpMedico (agenda + asistente)
 ```
+
+Oferta pública: [`/servicios`](src/app/servicios/page.tsx).
 
 ---
 
@@ -44,12 +47,16 @@ Mallanet (directorio)   Waira ($100/mes)            Donación opcional
 
 | Término | Definición |
 | --- | --- |
-| **Waira** | Marca que vende la membresía y hace el onboarding del médico |
-| **Mallanet** | Hub: directorio público, donaciones, reputación compartida |
+| **Waira** | Marca que vende los paquetes y hace el onboarding del médico |
+| **Mallanet** | Hub: directorio/donaciones/reputación compartida (integración con Directorio Waira) |
 | **mvpMedico** | Nombre técnico del producto/repo (agenda + landing + sync) |
-| **Membresía** | $100 USD/mes: presencia + landing + asistente + agenda |
-| **Perfil de directorio** | Ficha pública en Mallanet (especialidad, zona, enlace a la landing) |
-| **Landing** | Página del médico entre el descubrimiento y la reserva/contacto |
+| **Paquete** | Oferta comercial: Arranque, Consultorio Activo o Centro Médico/Clínica (setup + mensual) |
+| **Arranque** | Paquete para profesional independiente |
+| **Consultorio Activo** | Paquete para consultorio con 1–5 profesionales |
+| **Centro Médico / Clínica** | Paquete para clínicas 5–60+ con precio por rangos (Modelo A) |
+| **Membresía** | Suscripción activa del paquete contratado (estado `active`/`paused` en producto) |
+| **Perfil de directorio** | Ficha pública en el Directorio Waira (especialidad, zona, enlace) |
+| **Landing** | Página del médico entre el descubrimiento y la reserva; **add-on**, no default del paquete |
 | **Asistente** | Flujo automatizado de contacto/reserva que crea turnos en la agenda (en v1, web) |
 | **Agenda central** | Fuente de verdad de disponibilidad y turnos (Postgres) |
 | **Recurso** | En v1, un médico |
@@ -63,16 +70,33 @@ Mallanet (directorio)   Waira ($100/mes)            Donación opcional
 
 ## 4. Dinero
 
+Precios públicos de trabajo (propuesta paquetes MVP v2 — opción **Balance** / **Modelo A**). Detalle en `/servicios`.
+
+| Paquete | Para quién | Setup | Mensual |
+| --- | --- | ---: | ---: |
+| **Arranque** | Profesional independiente | $150 | $35 |
+| **Consultorio Activo** | 1–5 profesionales | $350 | $89 (hasta 5) |
+| **Centro Médico / Clínica** | 5–60+ | según rango | según rango (Modelo A) |
+
+### Centro — Modelo A (flat por rango)
+
+| Profesionales | Mensual | Setup |
+| --- | ---: | ---: |
+| 5–10 | $180 | $400 |
+| 11–20 | $320 | $700 |
+| 21–30 | $450 | $1 000 |
+| 31–50 | $650 | $1 500 |
+| 51–60+ | $850 (60+: cotización) | $2 000 |
+
 | | |
 | --- | --- |
 | Quién paga | Médico o clínica |
-| Cuánto | $100 USD/mes por membresía activa |
-| Meta | ≥100 membresías (~$10 000 MRR) |
-| Incluye | Perfil Mallanet + landing + asistente + agenda (anti-solape) |
-| Donación | Opcional, a Mallanet; no sustituye la membresía |
-| Cobro | Waira cobra la suscripción; Mallanet no |
+| Incluido siempre | Perfil Directorio Waira + agenda (anti-solape) + asistente web |
+| Add-ons | Landing profesional; HCE básica bajo pedido |
+| Donación | Opcional, a Mallanet; no sustituye el paquete |
+| Cobro | Waira cobra setup + suscripción; Mallanet no; Stripe aún por definir |
 
-Éxito de negocio en esta fase: poder sostener 100 membresías sin que alguien del equipo arme a mano cada turno.
+Éxito de negocio en esta fase: cerrar paquetes pagados y sostener operación sin armar turnos a mano.
 
 ---
 
@@ -94,23 +118,25 @@ Permisos finos y multi-sede quedan fuera de v1.
 - [x] Auth (Supabase): médico + recepción
 - [x] Onboarding: cuenta → perfil → publicar landing
 - [x] Perfil de directorio + flag “publicado en Mallanet”
-- [x] Landing por médico (especialidad, bio corta, CTA de reserva/contacto)
+- [x] Landing por médico (especialidad, bio corta, CTA de reserva/contacto) — capacidad técnica; comercialmente es **add-on**
 - [x] Calendario por médico (`resource`)
 - [x] CRUD de turnos
 - [x] Anti-solapamiento
 - [x] Formulario/asistente web que crea el turno (mensajería después, si hace falta)
 - [x] Datos mínimos del paciente visibles junto al turno
 - [x] CTA opcional de donación a Mallanet en la landing (no bloquea la reserva)
+- [x] Página comercial `/servicios` con paquetes organizados (precios Balance / Modelo A)
 
-> Implementación inicial en el repo (2026-07-20). Activar membresía + Supabase local/cloud para probar end-to-end. Google Calendar retirado del MVP (2026-07-21).
+> Implementación inicial en el repo (2026-07-20). Activar membresía + Supabase local/cloud para probar end-to-end. Google Calendar retirado del MVP (2026-07-21). Paquetes comerciales alineados a propuesta v2 (2026-07-21).
 
-Éxito de producto: el médico con membresía es encontrable, tiene landing viva, y deja de mantener dos agendas a mano para el flujo principal de turnos.
+Éxito de producto: el médico con paquete activo es encontrable, agenda sin solapes, y el visitante entiende la oferta en `/servicios` sin confundir roadmap con features ya shippeadas.
 
 ## 7. MVP v1 — no entra
 
 - Telemedicina
-- Facturación / obras sociales
-- Historia clínica completa
+- Facturación electrónica / obras sociales / reembolsos a aseguradoras
+- Historia clínica avanzada / completa (HCE básica solo add-on bajo pedido)
+- Control de inventario avanzado
 - App nativa
 - Marketplace de precios o subasta de turnos
 - IA de diagnóstico
@@ -118,7 +144,8 @@ Permisos finos y multi-sede quedan fuera de v1.
 - Escritura agresiva bidireccional a calendarios de terceros
 - Multi-país / HIPAA formal (más allá de acceso básico bien hecho)
 - Vivir solo de donaciones
-- Un médico en N clínicas el día 1
+- Un médico en N clínicas el día 1 (multiagenda multi-sede: roadmap / add-on comercial)
+- Recordatorio de pago WhatsApp/SMS y lista de espera automatizada (roadmap del paquete; no shippeados)
 
 ---
 
@@ -201,8 +228,10 @@ Cuando exista el repo:
 | 6 | Timezone | Una IANA por clínica | Evita líos de solape entre zonas |
 | 7 | Nombres | Waira vende; mvpMedico = técnico; Mallanet = hub | Marca, producto y comunidad separados |
 | 8 | Hosting | Vercel + Supabase | Rápido para landings |
-| 9 | Ingreso | Membresía $100; donación Mallanet aparte | Meta 100×$100 sin mezclar con donación |
-| 10 | Asistente v1 | Formulario web; mensajería después | Sin depender de WhatsApp Business el día 1 |
+| 9 | Ingreso | Paquetes Balance / Modelo A (ver §4); donación Mallanet aparte | Oferta escalable por tamaño; sin mezclar con donación |
+| 10 | Asistente v1 | Formulario web; mensajería / recordatorio de pago después | Sin depender de WhatsApp Business el día 1 |
+| 11 | Landing | Add-on comercial; capacidad técnica ya en el producto | Alineado a propuesta paquetes MVP v2 |
+| 12 | Precios públicos | Solo opción Balance + Modelo A en `/servicios` | Evitar tres columnas de precio por paquete |
 
 Reabrir solo si choca con implementación, legal o pagos.
 
@@ -217,7 +246,7 @@ Contrato de agentes y playbook del trio: [`AGENTS.md`](AGENTS.md) + [`CONTRIBUTI
 3. Claim Issue → rama `feature/NNN-short-name` + `specs/NNN-…` → PR
 4. PR aunque sea solo docs; 1 approve de otro del trio
 
-Cambio de producto: editar la sección (y el glosario si cambia un término). Si reabrís una fila de §10, en el PR: `Propuesta: …` y 3–5 líneas de trade-off. Actualizar la fecha arriba al mergear.
+Cambio de producto: editar la sección (y el glosario si cambia un término). Si reabres una fila de §10, en el PR: `Propuesta: …` y 3–5 líneas de trade-off. Actualizar la fecha arriba al mergear.
 
 Weekly: avance hacia 100 membresías y una mejora landing→turno. Cada feature debería poder verse en UI o en un E2E.
 
@@ -270,6 +299,7 @@ Fuera de v1: ver §7.
 
 | Fecha | Cambio |
 | --- | --- |
+| 2026-07-21 | Paquetes comerciales v2: §4 Balance/Modelo A, landing add-on, página `/servicios` |
 | 2026-07-21 | Wire-up: grilla semanal, slots públicos, seed demo, membership cancelled, E2E ampliados |
 | 2026-07-20 | Primera versión: visión, MVP, stack |
 | 2026-07-20 | Negocio Waira $100×100, Mallanet, landing+asistente, decisiones cerradas |

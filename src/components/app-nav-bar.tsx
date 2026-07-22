@@ -11,6 +11,7 @@ const appLinks = [
 ];
 
 const publicLinks = [
+  { href: "/servicios", label: "Servicios" },
   { href: "/clinicas", label: "Clínicas" },
   { href: "/calculadora", label: "Calculadora" },
   { href: "/preview", label: "Preview" },
@@ -23,7 +24,8 @@ export function AppNavBar({ signedIn }: { signedIn: boolean }) {
     pathname.startsWith("/l/") ||
     pathname.startsWith("/preview") ||
     pathname.startsWith("/clinicas") ||
-    pathname.startsWith("/calculadora");
+    pathname.startsWith("/calculadora") ||
+    pathname.startsWith("/servicios");
 
   return (
     <header className="border-b border-[color:var(--brand-forest)]/10 bg-white/80 backdrop-blur">
@@ -50,6 +52,12 @@ export function AppNavBar({ signedIn }: { signedIn: boolean }) {
                 {link.label}
               </Link>
             ))}
+            <Link
+              href="/servicios"
+              className="nav-link hover:bg-[color:var(--brand-foam)]"
+            >
+              Servicios
+            </Link>
             <Link
               href="/calculadora"
               className="nav-link hover:bg-[color:var(--brand-foam)]"
