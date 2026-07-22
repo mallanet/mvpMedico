@@ -1,0 +1,53 @@
+[
+  {
+    "date": "2026-07-21",
+    "macrostructure": "preview sandbox + shipped auth",
+    "theme": "Waira (DESIGN.md)",
+    "enrichment": "clinic picker",
+    "brief": "Preview clinic picker · localStorage agenda · auth gates on · seed doctor",
+    "nav": "AppNav (Agenda/Preview/Clínicas)",
+    "footer": "Ft2 (layout)",
+    "type": "Elms Sans"
+  },
+  {
+    "date": "2026-07-21",
+    "macrostructure": "profile + directory (preview)",
+    "theme": "Waira (DESIGN.md)",
+    "enrichment": "clinic-card geometric media",
+    "brief": "Ecuador clinic seed · /preview booking · calendar Forest colors · remove Google",
+    "nav": "AppNav (Clinicas/Preview)",
+    "footer": "Ft2 (layout)",
+    "type": "Elms Sans"
+  },
+  {
+    "date": "2026-07-21",
+    "macrostructure": "dense utility (app family)",
+    "theme": "Waira (DESIGN.md)",
+    "enrichment": "none",
+    "brief": "Multi-route redesign · PageHeader · .field/.btn parity",
+    "nav": "AppNav (preserved)",
+    "footer": "Ft2 (layout)",
+    "type": "Elms Sans"
+  },
+  {
+    "date": "2026-07-21",
+    "macrostructure": "Split Studio",
+    "theme": "Waira (DESIGN.md)",
+    "enrichment": "brand icons (Tier B SVG)",
+    "brief": "Audit taste-skill-v1 → refine / zig-zag knobs + btn:active",
+    "nav": "AppNav (preserved)",
+    "footer": "Ft2 (layout)",
+    "type": "Elms Sans",
+    "knobs": "split=6/4, zigzag=on"
+  },
+  {
+    "date": "2026-07-21",
+    "macrostructure": "Split Studio",
+    "theme": "Waira (DESIGN.md)",
+    "enrichment": "brand icons (Tier B SVG)",
+    "brief": "Refine @src · Elms Sans · Brandkit iconography",
+    "nav": "AppNav (preserved)",
+    "footer": "Ft2 (layout)",
+    "type": "Elms Sans"
+  }
+]

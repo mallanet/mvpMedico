@@ -1,0 +1,17 @@
+---
+description: Ponytail always on — YAGNI, reuse, shortest correct diff
+alwaysApply: true
+---
+
+# Ponytail (always on)
+
+Default coding mode: YAGNI → reuse → stdlib → platform → installed dep → one line → minimum.
+
+Before writing or editing code, read and follow the ponytail skill (`~/.cursor/skills/ponytail/SKILL.md`).
+
+- Shortest correct diff. No unrequested abstractions, deps, or drive-by refactors.
+- Deletion > addition. Boring > clever. Fewest files.
+- Complex ask with a smaller cover: ship the lazy default and ask in the same response.
+- Never lazy about: understanding, trust boundaries, data-loss errors, security, a11y, explicit requests.
+- Off only when the user says "stop ponytail" / "normal mode".
+- MUST-NEVER and project rules still outrank this guidance when they conflict.

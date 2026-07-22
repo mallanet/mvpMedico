@@ -134,6 +134,7 @@ export function CalendarGrid({
     notes?: string;
   }) {
     if (!dialog || dialog.type !== "create") return;
+    setError(null);
     startTransition(async () => {
       const payload = {
         startsAt: dialog.startsAt,
@@ -156,6 +157,7 @@ export function CalendarGrid({
 
   function onSubmitMove(input: { startsAt: string; endsAt: string }) {
     if (!dialog || dialog.type !== "edit") return;
+    setError(null);
     startTransition(async () => {
       const payload = {
         appointmentId: dialog.appointment.id,
@@ -175,6 +177,7 @@ export function CalendarGrid({
   }
 
   function onCancel(id: string) {
+    setError(null);
     startTransition(async () => {
       const result = mutations
         ? await mutations.cancel(id)
@@ -197,7 +200,7 @@ export function CalendarGrid({
         </p>
       ) : null}
 
-      {error ? (
+      {error && !dialog ? (
         <p className="cal-banner cal-banner--error" role="alert">
           {error}
         </p>
@@ -268,6 +271,7 @@ export function CalendarGrid({
                     disabled={pending || (!!appt && !isApptStart)}
                     onClick={() => {
                       if (appt && isApptStart) {
+                        setError(null);
                         setDialog({ type: "edit", appointment: appt });
                         return;
                       }
@@ -330,7 +334,11 @@ export function CalendarGrid({
           notes={dialog.type === "edit" ? (dialog.appointment.notes ?? "") : ""}
           pending={pending}
           membershipActive={membershipActive}
-          onClose={() => setDialog(null)}
+          error={error}
+          onClose={() => {
+            setError(null);
+            setDialog(null);
+          }}
           onCreate={onSubmitCreate}
           onMove={onSubmitMove}
           onCancel={

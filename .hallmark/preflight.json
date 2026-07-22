@@ -1,0 +1,11 @@
+{
+  "scanned_at": "2026-07-21",
+  "design_md": "DESIGN.md",
+  "fonts": ["Elms Sans (--font-elms-sans / Google Fonts)"],
+  "palette": ["brand-forest #105151", "brand-lagoon #25cec9", "brand-foam #e3fffc", "background #f3f7f6", "foreground #0f2926"],
+  "motion": "motion-cut (CSS 150ms only; no framer-motion/gsap)",
+  "spacing": "4pt scale --space-1…8",
+  "framework": "Next.js 16 App Router + Tailwind 3.4 + React 19",
+  "preserve": ["palette", "spacing", "DESIGN.md system", "waira-isotipo.svg"],
+  "introduce_when_building": ["Elms Sans", "brand icons", "Split Studio marketing family"]
+}

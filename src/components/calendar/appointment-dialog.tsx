@@ -16,6 +16,7 @@ type Props = {
   notes: string;
   pending: boolean;
   membershipActive: boolean;
+  error?: string | null;
   onClose: () => void;
   onCreate: (input: {
     patientName: string;
@@ -35,6 +36,7 @@ export function AppointmentDialog({
   notes,
   pending,
   membershipActive,
+  error,
   onClose,
   onCreate,
   onMove,
@@ -62,6 +64,7 @@ export function AppointmentDialog({
     }
 
     const start = new Date(localStart);
+    if (Number.isNaN(start.getTime())) return;
     const end = addMinutes(start, SLOT_MINUTES);
     onMove({ startsAt: start.toISOString(), endsAt: end.toISOString() });
   }
@@ -103,12 +106,19 @@ export function AppointmentDialog({
             Nuevo inicio
             <input
               type="datetime-local"
+              step={SLOT_MINUTES * 60}
               value={localStart}
               onChange={(e) => setLocalStart(e.target.value)}
               className="rounded-lg border px-3 py-2"
               disabled={!membershipActive}
             />
           </label>
+        ) : null}
+
+        {error ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+            {error}
+          </p>
         ) : null}
 
         {mode === "create" ? (
