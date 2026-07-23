@@ -267,7 +267,7 @@ export function DoctorPanel({ clinics }: { clinics: EcuadorClinic[] }) {
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </Link>
-          {/* eslint-disable-next-line @next/next/no-img-element -- brand SVG */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/brand/waira-isotipo.svg"
             alt=""

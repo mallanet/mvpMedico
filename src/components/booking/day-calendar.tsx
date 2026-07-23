@@ -19,10 +19,8 @@ import { useEffect, useMemo, useState } from "react";
 import { BOOKABLE_WEEKDAYS, dateInputValue } from "@/lib/slots";
 
 type Props = {
-  /** yyyy-MM-dd */
   selected: string;
   onSelect: (isoDate: string) => void;
-  /** Optional: mark days that currently have openings */
   hasOpenings?: (isoDate: string) => boolean;
 };
 

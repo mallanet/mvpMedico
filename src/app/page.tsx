@@ -58,7 +58,7 @@ export default function HomePage() {
         >
           <div className="mb-4 flex items-center justify-between gap-3">
             <p className="font-medium text-teal-950">Agenda del día</p>
-            {/* eslint-disable-next-line @next/next/no-img-element -- brand icon */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/brand/icons/calendar.svg"
               alt=""
@@ -117,7 +117,7 @@ export default function HomePage() {
               <div
                 className={`flex ${item.flip ? "sm:justify-start" : "sm:justify-end"}`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- brand icon */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.icon}
                   alt=""

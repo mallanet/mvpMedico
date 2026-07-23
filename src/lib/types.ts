@@ -95,6 +95,5 @@ export type TimeSlot = {
   endsAt: string;
 };
 
-/** Canonical overlap rejection copy for UI + E2E. */
 export const OVERLAP_MESSAGE =
   "Ese horario ya está tomado. Elegí otro." as const;

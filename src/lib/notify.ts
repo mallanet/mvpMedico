@@ -1,7 +1,3 @@
-/**
- * Minimal appointment email notifications.
- * Uses Resend HTTP API when RESEND_API_KEY is set; otherwise no-op (logs in dev).
- */
 type NotifyInput = {
   to?: string | null;
   subject: string;

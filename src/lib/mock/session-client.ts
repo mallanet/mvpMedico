@@ -32,7 +32,6 @@ export function demoSessionFromCredentials(email: string): DemoSession {
   return sessionForEmail(normalized);
 }
 
-/** Set session cookie from the browser (login form). */
 export function setDemoSessionClient(session: DemoSession): void {
   if (typeof window === "undefined") return;
   const raw = encodeURIComponent(JSON.stringify(session));

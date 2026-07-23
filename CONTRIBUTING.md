@@ -27,7 +27,7 @@ Secretos (cuando existan): `.env.local` — nunca al git.
 | --- | --- |
 | **Base** | `AGENTS.md`, `base.md`, constitution, rule Cursor del repo. Obligatoria. |
 | **Aditivo OK** | Tus skills, MCPs, user rules, estilo local. |
-| **Aditivo NO** | Commitear “todos deben usar mi skill X”, stacks de un solo agente, secretos, paths de tu máquina. |
+| **Aditivo NO** | Commitear “todos deben usar mi skill X”, stacks de un solo agente, secretos, paths de tu máquina. Solo se versiona `.cursor/rules/mvpmedico-agents.mdc`; el resto de rules/skills locales está en `.gitignore`. |
 
 Cambiar la base = PR dedicado + 1 approve de otro del trio.
 

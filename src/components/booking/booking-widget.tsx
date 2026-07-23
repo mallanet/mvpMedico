@@ -23,9 +23,7 @@ type Props = {
   doctorName: string;
   specialty?: string;
   ctaLabel?: string;
-  /** Preview sandbox: persist to localStorage under this clinic id. */
   sandboxClinicId?: string;
-  /** Inside a shared panel — no second card chrome. */
   embedded?: boolean;
 };
 
@@ -79,7 +77,6 @@ export function BookingWidget({
     return (iso: string) => cache.get(iso) ?? false;
   }, [sandboxClinicId]);
 
-  // Client-only: land on a day that actually has openings (avoids hydration mismatch)
   useEffect(() => {
     if (!sandboxClinicId || didInitDate.current) return;
     didInitDate.current = true;

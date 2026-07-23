@@ -17,7 +17,6 @@ function parseDb(raw: string | undefined | null): DemoDb | null {
   }
 }
 
-/** Client-side mirror for reset / preview tooling. */
 export function readDemoDbClient(): DemoDb {
   if (typeof window === "undefined") return buildSeedDb();
   const fromLs = parseDb(window.localStorage.getItem(DEMO_DB_LS_KEY));

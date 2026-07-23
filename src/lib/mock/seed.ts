@@ -104,7 +104,6 @@ function apt(
   };
 }
 
-/** 8 seed appointments relative to current week (Mon–Sat). */
 export function buildSeedAppointments(now = new Date()): Appointment[] {
   const week = startOfWeekMonday(now);
   return [

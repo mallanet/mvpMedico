@@ -1,4 +1,3 @@
-/** Demo mode when Supabase env is missing or explicitly mock. */
 export function isDemoMode(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ?? "";
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? "";

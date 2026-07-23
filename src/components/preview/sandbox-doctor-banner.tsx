@@ -6,7 +6,6 @@ import {
   type DoctorSandbox,
 } from "@/lib/preview-sandbox";
 
-/** Client-only doctor line for preview shells (localStorage). */
 export function SandboxDoctorBanner() {
   const [doctor, setDoctor] = useState<DoctorSandbox | null>(null);
 

@@ -29,7 +29,8 @@ specs/                  Un directorio por feature (NNN-short-name)
 - Next.js (App Router) + TypeScript + Tailwind
 - Supabase (Auth, Postgres, RLS)
 - Playwright (E2E)
-- Hosting objetivo: Vercel + Supabase Cloud
+- Hosting objetivo: Vercel + Supabase Cloud (canonical); Cloudflare Workers opcional para review
+- Verificación: [`TOOLCHAIN.md`](TOOLCHAIN.md) · deuda: [`DEBT.md`](DEBT.md)
 
 ## Setup local
 
@@ -122,41 +123,41 @@ update public.profiles set role = 'admin_waira' where id = '<user-id>';
 | `npm run cf:deploy` | Build + deploy a Cloudflare |
 | `npm run cf:preview` | Preview local del worker |
 
-## Deploy (Cloudflare Workers — review continuo)
+## Deploy (Cloudflare Workers — review opcional)
 
-**Live preview:** [https://waira-mvpmedico.mariopulice21.workers.dev](https://waira-mvpmedico.mariopulice21.workers.dev)
+No es el hosting canónico (`base.md` §10 #8). Vercel + Supabase sí lo son.
 
-| Campo | Valor |
-| --- | --- |
-| Worker | `waira-mvpmedico` ([`wrangler.jsonc`](wrangler.jsonc)) |
-| Account ID | `7c582f80af4d212ed9dbf3e22ba591a8` |
-| URL | `https://waira-mvpmedico.mariopulice21.workers.dev` |
+Cada push a `main` o `feature/**` puede disparar [`.github/workflows/deploy-cloudflare.yml`](.github/workflows/deploy-cloudflare.yml) si hay secrets.
 
-Cada push a `main` o `feature/**` dispara [`.github/workflows/deploy-cloudflare.yml`](.github/workflows/deploy-cloudflare.yml).
+Secrets de GitHub (nunca commitear valores):
 
-Secrets de GitHub requeridos:
-
-- `CLOUDFLARE_API_TOKEN` — token con permiso Workers Edit
-- `CLOUDFLARE_ACCOUNT_ID` — `7c582f80af4d212ed9dbf3e22ba591a8`
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- `NEXT_PUBLIC_APP_URL` — `https://waira-mvpmedico.mariopulice21.workers.dev`
+- `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_MALLANET_DONATION_URL` (opcional)
 
-Local (con Node ≥22 y token en el entorno):
+Local:
 
 ```bash
-export CLOUDFLARE_API_TOKEN=...
-export CLOUDFLARE_ACCOUNT_ID=7c582f80af4d212ed9dbf3e22ba591a8
+export CLOUDFLARE_API_TOKEN=…
+export CLOUDFLARE_ACCOUNT_ID=…
 npm run cf:deploy
 ```
 
+Verificación completa: [`TOOLCHAIN.md`](TOOLCHAIN.md).
+
 ## Deploy (Vercel + Supabase Cloud)
 
-Checklist mínimo para que el deploy no rompa auth:
+Canonical per `base.md` §10 #8. Smoke tests corren sin backend real (home + login UI).
 
-Smoke tests corren sin backend real (home + login UI).
+Overlap / create / cancel contra DB live (no en CI por defecto):
 
-Para agenda / landing autenticados:
+```bash
+E2E_FULL_APPOINTMENTS=1 E2E_DOCTOR_EMAIL=... E2E_DOCTOR_PASSWORD=... E2E_LANDING_SLUG=... npm run test:e2e
+```
+
+Agenda / landing autenticados:
 
 ```bash
 E2E_DOCTOR_EMAIL=... E2E_DOCTOR_PASSWORD=... E2E_LANDING_SLUG=... npm run test:e2e
@@ -168,10 +169,6 @@ Checklist mínimo (base.md §9):
 - [ ] Rechazar solape
 - [ ] Cancelar turno
 - [ ] Reservar desde landing
-
-## Deploy (Vercel + Supabase Cloud)
-
-Checklist mínimo para que el deploy no rompa auth:
 
 1. **Supabase Cloud**
    - Crear proyecto → Settings → API: copiar `URL`, `anon`, `service_role`

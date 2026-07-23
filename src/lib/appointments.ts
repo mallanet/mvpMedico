@@ -248,15 +248,6 @@ export async function moveAppointment(input: {
   return { ok: true };
 }
 
-/** @deprecated alias kept for older call sites */
-export async function rescheduleAppointment(input: {
-  appointmentId: string;
-  startsAt: string;
-  endsAt: string;
-}): Promise<ActionResult> {
-  return moveAppointment(input);
-}
-
 export async function bookFromLanding(input: {
   slug: string;
   startsAt: string;

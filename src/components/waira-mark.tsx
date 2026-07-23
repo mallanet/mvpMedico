@@ -1,6 +1,5 @@
 type Props = {
   size?: "sm" | "md" | "lg";
-  /** When true, mark is decorative beside visible "Waira" text */
   decorative?: boolean;
 };
 
@@ -10,7 +9,7 @@ export function WairaMark({ size = "md", decorative = false }: Props) {
   const h = heights[size];
   return (
     <span className="inline-flex items-center gap-2.5">
-      {/* eslint-disable-next-line @next/next/no-img-element -- brand SVG from /public */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/brand/waira-isotipo.svg"
         alt={decorative ? "" : "Waira"}

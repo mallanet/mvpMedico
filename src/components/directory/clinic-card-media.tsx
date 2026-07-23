@@ -37,7 +37,7 @@ export function ClinicCardMedia({
       aria-hidden
     >
       {coverSrc ? (
-        // eslint-disable-next-line @next/next/no-img-element -- local clinic asset
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={coverSrc}
           alt=""
@@ -55,7 +55,7 @@ export function ClinicCardMedia({
       ) : null}
 
       {logoSrc ? (
-        // eslint-disable-next-line @next/next/no-img-element -- generated clinic logo
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={logoSrc}
           alt=""

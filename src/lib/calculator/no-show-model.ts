@@ -1,28 +1,13 @@
-/**
- * Conservative no-show loss / recovery model for the marketing calculator.
- *
- * Sources (also exposed in UI):
- * - Dantas et al., Health Policy 2018 — SLR average no-show ~23% globally.
- * - Cochrane CD007458 — SMS reminders vs none: attendance RR ~1.14;
- *   pooled attendance 67.8% → 78.6% (~33% relative drop in no-shows).
- * We default below those ceilings (18% rate, 25% recovery) so projections stay conservative.
- */
-
 export const WAIRA_MEMBERSHIP_USD = 100;
 
-/** Suggested default under industry SLR average (~23%). */
 export const DEFAULT_NO_SHOW_RATE = 0.18;
 
-/** Industry reference shown in help copy. */
 export const INDUSTRY_NO_SHOW_RATE_REF = 0.23;
 
-/** Primary recovery of lost no-show revenue (conservative vs ~33% Cochrane-implied). */
 export const RECOVERY_RATE_PRIMARY = 0.25;
 
-/** Low band: reminders-only floor. */
 export const RECOVERY_RATE_LOW = 0.2;
 
-/** High band: reminders + prepago / waitlist ceiling (+5 pp over primary). */
 export const RECOVERY_RATE_HIGH = 0.3;
 
 export const DEFAULT_WORKDAYS_PER_WEEK = 5;
@@ -35,9 +20,7 @@ export type NoShowInputMode = "rate" | "direct";
 
 export type NoShowCalculatorInput = {
   feeUsd: number;
-  /** Appointments scheduled per day (used when mode === "rate"). */
   scheduledPerDay: number;
-  /** Known no-shows per day (used when mode === "direct"). */
   noShowsPerDayDirect: number;
   mode: NoShowInputMode;
   noShowRate: number;
@@ -141,7 +124,6 @@ export function computeNoShowImpact(
   };
 }
 
-/** Fixed case used in specs / verification: fee 40, 10/day, 18%. */
 export const VERIFICATION_CASE_INPUT: NoShowCalculatorInput = {
   feeUsd: DEFAULT_FEE_USD,
   scheduledPerDay: DEFAULT_SCHEDULED_PER_DAY,
@@ -153,7 +135,6 @@ export const VERIFICATION_CASE_INPUT: NoShowCalculatorInput = {
   minutesPerConsult: DEFAULT_MINUTES_PER_CONSULT,
 };
 
-/** Expected: 1.8 no-shows/day → $72/day → $360/week → $1548/month; recover $387. */
 export function expectedVerificationCase(): NoShowCalculatorResult {
   return computeNoShowImpact(VERIFICATION_CASE_INPUT);
 }

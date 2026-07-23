@@ -6,7 +6,6 @@ type Props = {
   children?: ReactNode;
 };
 
-/** Shared app-page title block — DESIGN.md dense sans utility. */
 export function PageHeader({ title, description, children }: Props) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">

@@ -32,7 +32,7 @@ export default function RootLayout({
         <footer className="border-t border-teal-900/10">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm text-teal-900/70 sm:px-6">
             <p className="flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element -- brand SVG from /public */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/brand/waira-isotipo.svg"
                 alt=""

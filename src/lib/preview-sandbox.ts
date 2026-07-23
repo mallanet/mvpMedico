@@ -12,13 +12,12 @@ const STORAGE_V3 = "waira-preview-sandbox-v3";
 
 export const SANDBOX_DOCTOR_ID = "sandbox-doctor";
 
-/** Mon=1 … Sat=6 */
 export type PresenceWeekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 export type PresenceWindow = {
   weekday: PresenceWeekday;
-  start: string; // HH:mm
-  end: string; // HH:mm
+  start: string;
+  end: string;
 };
 
 export type Affiliation = {
@@ -32,7 +31,6 @@ export type DoctorSandbox = {
   specialty: string;
   zone: string;
   bioShort: string;
-  /** Bumped when default mock appointments / profile change. */
   seedVersion: number;
   affiliations: Affiliation[];
   appointmentsByClinic: Record<string, Appointment[]>;
@@ -103,7 +101,6 @@ function mockAppointment(
   };
 }
 
-/** Cross-clinic demo load: no overlaps, presence 08–20. */
 export function buildMockAppointments(): Record<string, Appointment[]> {
   return {
     "metropolitano-quito": [
@@ -368,7 +365,6 @@ function readDoctor(): DoctorSandbox {
       }
     }
 
-    // v2 → v3: keep appointments/affiliations, refresh presence to full demo day
     const rawV2 = window.localStorage.getItem(STORAGE_V2);
     if (rawV2) {
       const parsed = JSON.parse(rawV2) as Partial<DoctorSandbox>;
@@ -395,7 +391,6 @@ function readDoctor(): DoctorSandbox {
       return doctor;
     }
   } catch {
-    /* fall through */
   }
   const fresh = defaultDoctor();
   writeDoctor(fresh);
@@ -491,7 +486,6 @@ function findGlobalOverlap(
   return hit ? { clinicId: hit.clinicId } : null;
 }
 
-/** JS Date.getDay(): 0=Sun … 6=Sat */
 export function toPresenceWeekday(day: Date): PresenceWeekday | null {
   const d = day.getDay();
   if (!BOOKABLE_WEEKDAYS.has(d)) return null;
@@ -550,7 +544,6 @@ export function listSandboxAvailableSlots(
   return { ok: true, slots: inWindow };
 }
 
-/** First bookable date (yyyy-MM-dd) with at least one free slot, or null. */
 export function findNextSandboxDateWithSlots(
   clinicId: string,
   fromDays: Date[],
@@ -706,7 +699,6 @@ export function applyDemoPresenceWindows(): DoctorSandbox {
   return saveSandboxDoctor({ affiliations });
 }
 
-/** Reset helper for tests / UI */
 export function resetSandboxDoctor(seed = defaultDoctor()): void {
   writeDoctor(seed);
 }

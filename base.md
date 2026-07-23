@@ -2,7 +2,7 @@
 
 Documento de alineación del equipo. Si algo de producto cambia, se edita acá (mejor en un PR que en un chat suelto).
 
-**Última actualización:** 2026-07-22  
+**Última actualización:** 2026-07-23  
 **Estado:** paquetes Arranque/Consultorio operativos en demo (confirmación, recepción, multi-agenda, directorio) + página comercial `/servicios`
 
 Nombres que usamos: **Waira** vende; **mvpMedico** es el repo y el producto técnico; **Mallanet** es el hub (directorio y donaciones). El **Directorio Waira** es el directorio público propio incluido en todos los paquetes (visibilidad vía Mallanet / flags actuales).
@@ -190,7 +190,7 @@ Límites de v1: una timezone IANA por clínica; sin multi-sede.
 | --- | --- |
 | App / landings | Next.js (App Router) + TypeScript + Tailwind |
 | Backend | Supabase (Postgres, Auth, RLS) |
-| Hosting | Vercel + Supabase cloud |
+| Hosting | Vercel + Supabase cloud (canonical); Cloudflare Workers opcional para review |
 | Pagos | Por definir (Stripe o equivalente LatAm); no bloquea el scaffold de agenda |
 | E2E | Playwright |
 | Repo | GitHub |
@@ -227,7 +227,7 @@ Cuando exista el repo:
 | 5 | Multi-clínica | No en v1 | Onboarding y RLS más simples |
 | 6 | Timezone | Una IANA por clínica | Evita líos de solape entre zonas |
 | 7 | Nombres | Waira vende; mvpMedico = técnico; Mallanet = hub | Marca, producto y comunidad separados |
-| 8 | Hosting | Vercel + Supabase | Rápido para landings |
+| 8 | Hosting | Vercel + Supabase canonical; CF Workers opcional (review) | Landings en Vercel; preview continuo sin acoplar account IDs al repo |
 | 9 | Ingreso | Paquetes Balance / Modelo A (ver §4); donación Mallanet aparte | Oferta escalable por tamaño; sin mezclar con donación |
 | 10 | Asistente v1 | Formulario web; mensajería / recordatorio de pago después | Sin depender de WhatsApp Business el día 1 |
 | 11 | Landing | Add-on comercial; capacidad técnica ya en el producto | Alineado a propuesta paquetes MVP v2 |
@@ -277,7 +277,7 @@ Orden sugerido de trabajo. El scaffold de §6 está en el repo; esto es lo que f
 2. [x] **Calendario semanal visual** — grilla usable para médico/recepción
 3. [x] **Rol recepción** — invitar/usar recepción; signup bootstrapéa médico
 4. [ ] **Cobro membresía** — Stripe u equivalente LatAm (hoy stub `active`/`paused`/`cancelled`)
-5. [ ] **Deploy cloud** — Vercel + Supabase cloud (URL compartible)
+5. [ ] **Deploy cloud** — Vercel + Supabase cloud (URL compartible); CF Workers solo como review opcional
 
 ### Integraciones / producto
 

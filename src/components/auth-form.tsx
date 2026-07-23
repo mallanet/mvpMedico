@@ -33,7 +33,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         setLoading(false);
         return;
       }
-      // Sync cookie from LS without resetting seed (preserves invites / turnos).
+
       writeDemoDbClient(readDemoDbClient());
       const session = demoSessionFromCredentials(email);
       setDemoSessionClient(session);
@@ -81,7 +81,6 @@ export function AuthForm({ mode }: { mode: Mode }) {
       }
     }
 
-    // DECISION: signup lands on onboarding; login goes to calendar.
     router.push(mode === "signup" ? "/onboarding" : "/calendar");
     router.refresh();
   }

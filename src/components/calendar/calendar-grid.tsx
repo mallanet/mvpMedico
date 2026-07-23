@@ -49,7 +49,6 @@ type Props = {
   appointments: Appointment[];
   membershipActive: boolean;
   weekStartIso?: string;
-  /** When set, skips Supabase realtime and uses these instead of server actions. */
   mutations?: CalendarMutations;
   enableRealtime?: boolean;
   onMutated?: () => void;
